@@ -8,5 +8,15 @@
         "lp-access-token": "LP_ACCESS_TOKEN",
         "lp-access-secret": "LP_SECRET_TOKEN",
         "library-regex": "spark-*.jar"
+    },
+    {
+        "name": "spark-servlet-filter",
+        "lp-building-project": "soss",
+        "lp-building-repo": "~data-platform/soss/+source/charmed-spark-servlet-filters/+git/charmed-spark-servlet-filters/",
+        "lp-building-branch-prefix": "lp-3.4",
+        "lp-consumer-key": "LP_CONSUMER_KEY",
+        "lp-access-token": "LP_ACCESS_TOKEN",
+        "lp-access-secret": "LP_SECRET_TOKEN",
+        "library-regex": "servlet-*.jar"
     }
 ]
