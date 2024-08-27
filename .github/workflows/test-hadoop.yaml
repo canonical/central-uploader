@@ -38,6 +38,7 @@ jobs:
           echo "cloned!"
           cp -r ie-tests hadoop
       - name: Run integration test
+        timeout-minutes: 900
         run: |
           cd hadoop
           cd ie-tests
