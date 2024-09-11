@@ -48,8 +48,13 @@ jobs:
           ls
           echo "End of the test"
           zip -r logs.zip logs
+      - name: Run simple script
+        timeout-minutes: 5
+        run: |
+          ls
+          ls -larth
       - name: Upload locally built artifact
         uses: actions/upload-artifact@v4
         with:
           name: logs
-          path: ie-tests/logs.zip
+          path: hadoop/ie-tests/logs.zip
