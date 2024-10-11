@@ -5,7 +5,7 @@ TEST_FOLDER=$1
 echo " "
 echo "Changing folder to ${TEST_FOLDER}"
 
-cd $SPARK_FOLDER
+cd $TEST_FOLDER
 
 echo " "
 echo " Cleaning ..."
