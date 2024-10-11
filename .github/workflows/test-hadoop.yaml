@@ -1,0 +1,99 @@
+name: Run hadoop tests
+
+on:
+  workflow_call:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: [self-hosted, linux, X64, large, jammy]
+    timeout-minutes: 1440
+    strategy:
+      fail-fast: false
+      matrix:
+        branch:
+          - "release-3.3.6-ubuntu2"
+          - "release-3.3.6-ubuntu2"
+          - "release-3.3.6-ubuntu2"
+          - "lp-3.3.6"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo snap install yq
+          sudo apt-get update
+          sudo apt-get -y install openjdk-8-jdk
+          sudo apt-get -y install maven
+          sudo apt-get -y install build-essential autoconf automake libtool cmake zlib1g-dev pkg-config libssl-dev libsasl2-dev git zip
+          sudo apt-get -y install software-properties-common
+          sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+          sudo apt-get update
+          sudo apt-get -y install g++-9 gcc-9
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 60 --slave /usr/bin/g++ g++ /usr/bin/g++-9
+      - name: ssh agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
+      - name: Clone repo
+        run: |
+          ls ~/
+          # sudo mkdir ~/.ssh        
+          # ls ~/.ssh/
+          ssh-keyscan -t rsa git.launchpad.net >> ~/.ssh/known_hosts
+          echo "cloning..."
+          git clone --progress --verbose ${{ secrets.REPO_URL }}
+          echo "cloned!"
+          cp -r ie-tests hadoop
+      - name: Generate uuid
+        id: uuid
+        timeout-minutes: 5
+        run: |
+          ls
+          ls -larth
+          uuid=$(uuidgen)
+          echo "uuid=$uuid" >> $GITHUB_OUTPUT
+      
+      - name: Run integration test
+        timeout-minutes: 900
+        run: |
+          cd hadoop
+          cd ie-tests
+          ls
+          /bin/bash run.sh ${{ matrix.branch }}
+          ls
+          echo "End of the test"
+          zip -r logs-${{steps.uuid.outputs.uuid }}.zip logs
+
+      - name: Upload locally built artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-logs-${{steps.uuid.outputs.uuid }}
+          path: hadoop/ie-tests/logs-${{steps.uuid.outputs.uuid }}.zip
+  validation:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    needs:
+      test
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Checkout results
+        uses: actions/download-artifact@v4
+        with:
+          path: results/
+          pattern: integration-test-logs-*
+          merge-multiple: true
+      - name: Get results
+        run: |
+          ls results/
+          zip -r all-results.zip results
+          cd results
+          ls
+          echo "END"
+      - name: Upload all tests logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-logs-uuid
+          path: all-results.zip
