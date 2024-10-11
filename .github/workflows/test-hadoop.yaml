@@ -46,6 +46,15 @@ jobs:
           git clone --progress --verbose ${{ secrets.REPO_URL }}
           echo "cloned!"
           cp -r ie-tests hadoop
+      - name: Generate uuid
+        id: uuid
+        timeout-minutes: 5
+        run: |
+          ls
+          ls -larth
+          uuid=$(uuidgen)
+          echo "uuid=$uuid" >> $GITHUB_OUTPUT
+      
       - name: Run integration test
         timeout-minutes: 900
         run: |
@@ -55,21 +64,13 @@ jobs:
           /bin/bash run.sh ${{ matrix.branch }}
           ls
           echo "End of the test"
-          zip -r logs.zip logs
-      - name: Generate uuid for resources
-        id: uuid
-        timeout-minutes: 5
-        run: |
-          ls
-          ls -larth
-          uuid=$(uuidgen)
-          echo "uuid=$uuid" >> $GITHUB_OUTPUT
+          zip -r logs-${{steps.uuid.outputs.uuid }}.zip logs
 
       - name: Upload locally built artifact
         uses: actions/upload-artifact@v4
         with:
           name: integration-test-logs-${{steps.uuid.outputs.uuid }}
-          path: hadoop/ie-tests/logs.zip
+          path: hadoop/ie-tests/logs-${{steps.uuid.outputs.uuid }}.zip
   validation:
     runs-on: ubuntu-22.04
     timeout-minutes: 15
