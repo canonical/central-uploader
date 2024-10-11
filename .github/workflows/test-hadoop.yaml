@@ -8,6 +8,14 @@ jobs:
   test:
     runs-on: [self-hosted, linux, X64, large, jammy]
     timeout-minutes: 1440
+    strategy:
+      fail-fast: false
+      matrix:
+        branch:
+          - "release-3.3.6-ubuntu2"
+          - "release-3.3.6-ubuntu2"
+          - "release-3.3.6-ubuntu2"
+          - "lp-3.3.6"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -44,17 +52,47 @@ jobs:
           cd hadoop
           cd ie-tests
           ls
-          /bin/bash run.sh
+          /bin/bash run.sh ${{ matrix.branch }}
           ls
           echo "End of the test"
           zip -r logs.zip logs
-      - name: Run simple script
+      - name: Generate uuid for resources
+        id: uuid
         timeout-minutes: 5
         run: |
           ls
           ls -larth
+          uuid=$(uuidgen)
+          echo "uuid=$uuid" >> $GITHUB_OUTPUT
+
       - name: Upload locally built artifact
         uses: actions/upload-artifact@v4
         with:
-          name: logs
+          name: integration-test-logs-${{steps.uuid.outputs.uuid }}
           path: hadoop/ie-tests/logs.zip
+  validation:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    needs:
+      test
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Checkout results
+        uses: actions/download-artifact@v4
+        with:
+          path: results/
+          pattern: integration-test-logs-*
+          merge-multiple: true
+      - name: Get results
+        run: |
+          ls results/
+          zip -r all-results.zip results
+          cd results
+          ls
+          echo "END"
+      - name: Upload all tests logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-logs-uuid
+          path: all-results.zip

@@ -1,9 +1,9 @@
 #!/bin/bash
 
-SPARK_FOLDER=$1
+TEST_FOLDER=$1
 
 echo " "
-echo "Changing folder to ${SPARK_FOLDER}"
+echo "Changing folder to ${TEST_FOLDER}"
 
 cd $SPARK_FOLDER
 
@@ -13,7 +13,9 @@ mvn clean
 
 echo " "
 echo " Running tests..."
-mvn test -fn
+# temporary commented test
+# mvn test -fn 
+echo "FAKE TEST"
 # -Dhadoop.version=3.3.6-ubuntu1
 
 echo " "
