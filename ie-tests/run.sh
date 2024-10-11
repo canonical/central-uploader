@@ -34,8 +34,7 @@ function run_tests(){
 
     FORMAT_TIME="\n***************************************\nTIMINGS:\n%E real\n%U user\n%S sys"
     ls
-    echo "We are here!"
-    # /usr/bin/time echo "here"
+    echo "Before running the test!"
     ./tests.sh "${SPARK_FOLDER}" >> $STD_OUT 2> $STD_ERR
 
     echo "***************************************" >> $STD_OUT
@@ -50,5 +49,4 @@ fi
 
 echo "Branch: ${BRANCH}"
 git checkout $BRANCH
-# git pull --rebase 
 run_tests

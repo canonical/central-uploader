@@ -13,9 +13,7 @@ mvn clean
 
 echo " "
 echo " Running tests..."
-# temporary commented test
-# mvn test -fn 
-echo "FAKE TEST"
+mvn test -fn 
 # -Dhadoop.version=3.3.6-ubuntu1
 
 echo " "
