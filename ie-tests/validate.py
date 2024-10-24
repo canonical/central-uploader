@@ -40,6 +40,7 @@ if __name__=="__main__":
     log_results={}
     log_errors={}
     log_tests = {}
+    print(f"Number of runs: {len(logs_archives)}")
     for log_archive in logs_archives:
         # Extract zip file and extract key stats.
         with tempfile.TemporaryDirectory() as tmpdirname:
