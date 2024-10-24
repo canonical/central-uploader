@@ -10,7 +10,7 @@ function run_tests(){
     BRANCH=$(git rev-parse --abbrev-ref HEAD)
     COMMIT=$(git rev-parse --short HEAD)
 
-    LOG_NAME=${DATE}_${BRANCH}_test
+    LOG_NAME=${DATE}_${BRANCH}_${RANDOM}_test
 
     mkdir -p "${IE_FOLDER}/logs"
 
