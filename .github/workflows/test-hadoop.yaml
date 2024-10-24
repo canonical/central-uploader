@@ -88,6 +88,11 @@ jobs:
       - name: Get results
         run: |
           ls results/
+          # install requirements
+          pip install -r requirements.txt
+          # run the validate script
+          python3 -m ie-tests.validate  -a "results/"
+          echo "Analyis finished"
           zip -r all-results.zip results
           cd results
           ls
