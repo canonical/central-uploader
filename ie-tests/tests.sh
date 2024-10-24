@@ -13,8 +13,8 @@ mvn clean
 
 echo " "
 echo " Running tests..."
-# tmp 
-# mvn test -fn 
+# Run maven tests 
+mvn test -fn 
 # -Dhadoop.version=3.3.6-ubuntu1
 
 echo " "
