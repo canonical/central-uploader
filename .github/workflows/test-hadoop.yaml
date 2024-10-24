@@ -85,17 +85,18 @@ jobs:
           path: results/
           pattern: integration-test-logs-*
           merge-multiple: true
-      - name: Get results
+      - name: Install python dependencies
         run: |
-          ls results/
           # install requirements
           pip install -r requirements.txt
+      - name: Get results
+        run: |
           # run the validate script
           python3 -m ie-tests.validate  -a "results/"
           echo "Analyis finished"
+      - name: Upload results
+        run: |
           zip -r all-results.zip results
-          cd results
-          ls
           echo "END"
       - name: Upload all tests logs
         uses: actions/upload-artifact@v4
