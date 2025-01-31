@@ -112,7 +112,7 @@ jobs:
 
       - name: Store builds
         if: ${{ steps.check-release.outputs.release-package == 'true' }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: releases-${{ inputs.name }}-${{ inputs.lp-building-branch-prefix }}
           path: ${{ env.OUTPUT_DIR }}-${{ inputs.name }}.zip
@@ -130,7 +130,7 @@ jobs:
     if: ${{ needs.download-builds.outputs.release == 'true' }}
     name: Release library on Github
     needs: download-builds
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
@@ -140,7 +140,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Download releases
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: releases-${{ inputs.name }}-${{ inputs.lp-building-branch-prefix }}
 
