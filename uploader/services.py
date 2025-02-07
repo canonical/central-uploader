@@ -1,5 +1,6 @@
 # Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
+"""Services module."""
 
 import logging
 from argparse import ArgumentParser, Namespace
@@ -17,6 +18,8 @@ logger = logging.getLogger(__name__)
 
 
 class Actions(str, Enum):
+    """Action enum."""
+
     VERSION = "get-version"
     VALID_NAME = "validate-name"
     CHECK_VERSION = "check-releases"
@@ -25,6 +28,7 @@ class Actions(str, Enum):
 
 
 def create_services_parser(parser: ArgumentParser) -> ArgumentParser:
+    """Create CLI parser."""
     subparser = parser.add_subparsers(dest="action")
     subparser.required = True
 
@@ -122,6 +126,7 @@ def create_services_parser(parser: ArgumentParser) -> ArgumentParser:
 
 
 def main(args: Namespace):
+    """Define main entrypoint."""
     if args.action == Actions.VERSION:
         if not is_valid_product_name(args.name):
             raise ValueError("Invalid product name!")

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
-
+"""Launchpad downloader module."""
 
 import argparse
 import collections
@@ -12,7 +12,7 @@ import sys
 import urllib.request
 from argparse import Namespace
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any
 from urllib.error import URLError
 from urllib.parse import unquote
 
@@ -29,17 +29,19 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class CIBuild:
+    """CI build information."""
+
     branch_name: str
     build_log_url: str
     ci_results: str
     date_built: str
     commit_sha1: str
     build_state: str
-    artifact_urls: List[str]
+    artifact_urls: list[str]
 
 
 def _get_tokenized_librarian_url(lp: Launchpad, file_url: str) -> str:
-    """Use OAuth to get a tokenised URL for private downloads"""
+    """Use OAuth to get a tokenised URL for private downloads."""
     # rewrote url
     rewritten_url = file_url.replace("code.launchpad.net/", "api.launchpad.net/devel/")
     logger.debug("Rewrote {} to {} for OAuth access...".format(file_url, rewritten_url))
@@ -48,13 +50,13 @@ def _get_tokenized_librarian_url(lp: Launchpad, file_url: str) -> str:
         ret = lp._browser._connection.request(rewritten_url, redirections=0)
         # Print the response to assist debugging failures
         logger.debug(ret)
-        assert False, "No redirect to download from, we can't proceed"
+        raise AssertionError("No redirect to download from, we can't proceed")
     except httplib2.RedirectLimit as e:
         return str(e.response["location"])
 
 
 def parse_args() -> Namespace:
-    """Parse command line args"""
+    """Parse command line args."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--repository-url",
@@ -99,7 +101,7 @@ def get_launchpad(credential_file: str) -> Launchpad:
 
 def get_branches_in_repo(
     lp: Launchpad, repo_url: str, branch_prefix: str
-) -> Dict[str, List[Any]]:
+) -> dict[str, list[Any]]:
     """Fetch branches from repo."""
     # get repository
     repo = lp.git_repositories.getByPath(path=repo_url)
@@ -120,10 +122,10 @@ def get_branches_in_repo(
 
 
 def get_build_runs_by_branch(
-    branches: Dict[str, List[Any]]
-) -> Dict[str, List[CIBuild]]:
+    branches: dict[str, list[Any]],
+) -> dict[str, list[CIBuild]]:
     """Fetch the list of build runs by branch."""
-    branch_builds: Dict[str, List[CIBuild]] = {}
+    branch_builds: dict[str, list[CIBuild]] = {}
 
     # iterate over builds
     for branch, ci_runs in branches.items():
@@ -171,7 +173,9 @@ def download_build_artifacts_by_branch(
         try:
             urllib.request.urlretrieve(url, f"{output_directory}/{file_name}")
         except URLError as e:
-            raise RuntimeError("Failed to download '{}'. '{}'".format(url, e.reason))
+            raise RuntimeError(
+                "Failed to download '{}'. '{}'".format(url, e.reason)
+            ) from e
 
 
 def main():
