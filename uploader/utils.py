@@ -1,5 +1,6 @@
 # Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
+"""Utils module."""
 
 import fnmatch
 import logging
@@ -9,7 +10,7 @@ import shutil
 import sys
 import zipfile
 from pathlib import Path
-from typing import Iterator, List, Optional, Union
+from typing import Iterator
 
 import requests
 from requests.auth import HTTPBasicAuth
@@ -24,39 +25,39 @@ RELEASE_VERSION = ".*-\\d+[.]\\d+[.]\\d+.*-ubuntu(0|[1-9][0-9]*)"
 CUSTOM_KEYMAP = [".jar", ".pom", ".sha1", ".sha256", ".sha512"]
 
 
-def file_comparator(file: str):
-    """Comparator for ordering file extensions for upload."""
+def file_comparator(file: str) -> int:
+    """Map file extension to int for upload ordering."""
     if os.path.splitext(file)[1] in CUSTOM_KEYMAP:
         return CUSTOM_KEYMAP.index(os.path.splitext(file)[1])
     return 100
 
 
 def is_valid_release_version(release_version: str) -> bool:
-    """This function validates the release version."""
+    """Validate the release version."""
     try:
         p = re.compile(RELEASE_VERSION)
         if p.match(release_version):
             return True
-    except Exception:
-        raise ValueError("Name do not match the ")
+    except Exception as e:
+        raise ValueError("Name do not match the ") from e
     return False
 
 
 def is_valid_product_name(product_name: str) -> bool:
-    """This function validates the name of the tarball."""
+    """Validate the name of the tarball."""
     try:
         p = re.compile(PRODUCT_PATTERN)
         if p.match(product_name):
             return True
-    except Exception:
-        raise ValueError("Name do not match the ")
+    except Exception as e:
+        raise ValueError("Name do not match the ") from e
     return False
 
 
 def get_product_tags(
     repository_owner: str, project_name: str, product_name: str, product_version: str
 ):
-    """This function return the tags related to a product."""
+    """Get the tags related to a product."""
     tags = get_repositories_tags(repository_owner, project_name)
     return [
         t
@@ -67,7 +68,7 @@ def get_product_tags(
 
 
 def get_library_tags(repository_owner: str, project_name: str, library_name: str):
-    """This function return the tags related to a library."""
+    """Get the tags related to a library."""
     tags = get_repositories_tags(repository_owner, project_name)
     return [t for t in tags if t.startswith(f"{library_name}")]
 
@@ -166,7 +167,6 @@ def check_next_release_name(
     release_version: str,
 ) -> bool:
     """Check that the new release name is valid."""
-
     related_tags = get_product_tags(
         repository_owner, project_name, product_name, product_version
     )
@@ -187,10 +187,11 @@ def check_next_release_name(
     return True
 
 
-def iter_paths(folder: Union[str, Path], regex: Optional[re.Pattern] = None):
+def iter_paths(folder: str | Path, regex: re.Pattern | None = None) -> Iterator[Path]:
+    """Directory tree generator."""
     folder_path = Path(folder) if isinstance(folder, str) else folder
 
-    for root, folders, files in os.walk(folder):
+    for root, _, files in os.walk(folder):
         root_path = Path(root).relative_to(folder_path)
 
         if not regex or regex.fullmatch(str(root_path)):
@@ -245,20 +246,19 @@ def upload(
 
 
 def get_version_from_tarball_name(tarball_name: str) -> str:
-    """This function extract the the tag name that will used for the release."""
+    """Extract the tag name that will used for the release."""
     assert is_valid_product_name(tarball_name)
 
     try:
         p = re.compile(TAG_PATTERN)
         items = p.split(tarball_name)
         return items[0]
-    except Exception:
-        raise ValueError("ERROR")
+    except Exception as e:
+        raise ValueError("ERROR") from e
 
 
 def iter_pages(url: str) -> Iterator[dict]:
     """Iterate over the elements across the pages of a paginated endpoint."""
-
     while url:
         r = requests.get(url)
         logger.debug(f"status code: {r.status_code}")
@@ -270,8 +270,8 @@ def iter_pages(url: str) -> Iterator[dict]:
         url = r.links["next"]["url"] if "next" in r.links else ""
 
 
-def get_repositories_tags(owner: str, repository_name) -> List[str]:
-    """This function return the list of tags in the database."""
+def get_repositories_tags(owner: str, repository_name) -> list[str]:
+    """Return the list of tags in the database."""
     url = f"https://api.github.com/repos/{owner}/{repository_name}/tags"
     tags = []
     for item in iter_pages(url):

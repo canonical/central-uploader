@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
+"""Launchpad release module."""
 
 import logging
 from argparse import ArgumentParser, Namespace
