@@ -104,7 +104,7 @@ jobs:
           ls -larth
           echo "Print rat-excludes"
           cat .rat-excludes
-          mvn clean install -pl $TEST_MODULES -am -Pjava-17 -Pspark-3.5 -Dspark.archive.mirror=https://archive.apache.org/dist/spark/spark-3.4.3 -Dspark.archive.name=spark-3.4.3-bin-hadoop3.tgz -Pzookeeper-3.6 -Dmaven.plugin.scalatest.exclude.tags=org.scalatest.tags.Slow,org.apache.kyuubi.tags.DeltaTest,org.apache.kyuubi.tags.IcebergTest,org.apache.kyuubi.tags.PaimonTest,org.apache.kyuubi.tags.SparkLocalClusterTest
+          mvn clean install -pl $TEST_MODULES -am -Pjava-17 -Pspark-3.5 -Dspark.archive.mirror=https://archive.apache.org/dist/spark/spark-3.4.3 -Dspark.archive.name=spark-3.4.3-bin-hadoop3.tgz -Pzookeeper-3.6 -Dmaven.plugin.scalatest.exclude.tags=org.scalatest.tags.Slow,org.apache.kyuubi.tags.DeltaTest,org.apache.kyuubi.tags.IcebergTest,org.apache.kyuubi.tags.PaimonTest,org.apache.kyuubi.tags.SparkLocalClusterTest >> logs/kyuubi_logs.out 2> logs/kyuubi_logs.err 
           echo "End of the test"
           # compress logs to final upload
           zip -r logs-${{steps.uuid.outputs.uuid }}.zip logs
