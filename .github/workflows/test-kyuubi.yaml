@@ -98,8 +98,11 @@ jobs:
           mkdir logs
           # to be removed!
           git checkout $branch
+          echo "ie-tests/*" >> .rat-excludes
+          echo "lp/*" >> .rat-excludes
           ls
-          ./build/mvn clean install -pl $TEST_MODULES -am -Pjava-17 -Pspark-3.5 -Dspark.archive.mirror=https://archive.apache.org/dist/spark/spark-3.4.3 -Dspark.archive.name=spark-3.4.3-bin-hadoop3.tgz -Pzookeeper-3.6 -Dmaven.plugin.scalatest.exclude.tags=org.scalatest.tags.Slow,org.apache.kyuubi.tags.DeltaTest,org.apache.kyuubi.tags.IcebergTest,org.apache.kyuubi.tags.PaimonTest,org.apache.kyuubi.tags.SparkLocalClusterTest
+          cat .rat-excludes
+          mvn clean install -pl $TEST_MODULES -am -Pjava-17 -Pspark-3.5 -Dspark.archive.mirror=https://archive.apache.org/dist/spark/spark-3.4.3 -Dspark.archive.name=spark-3.4.3-bin-hadoop3.tgz -Pzookeeper-3.6 -Dmaven.plugin.scalatest.exclude.tags=org.scalatest.tags.Slow,org.apache.kyuubi.tags.DeltaTest,org.apache.kyuubi.tags.IcebergTest,org.apache.kyuubi.tags.PaimonTest,org.apache.kyuubi.tags.SparkLocalClusterTest
           echo "End of the test"
           # compress logs to final upload
           zip -r logs-${{steps.uuid.outputs.uuid }}.zip logs
