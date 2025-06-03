@@ -1,0 +1,140 @@
+name: Run Kyuubi integration tests
+
+on:
+  workflow_call:
+  workflow_dispatch:
+    inputs:
+      branches:
+        description: 'Comma-separated list of branches to test'
+        required: true
+        default: '1.10.2'
+
+jobs:
+
+  prepare_matrix:
+    name: Prepare matrix
+    runs-on: ubuntu-24.04
+    steps:
+      - id: setup_matrix
+        run: |
+          input=${{ inputs.branches }}
+          echo "matrix=[\"${input//,/\",\"}\"]" >> $GITHUB_OUTPUT
+          echo "[\"${input//,/\",\"}\"]"
+    outputs:
+      matrix: ${{ steps.setup_matrix.outputs.matrix }}
+
+  test_kyuubi:
+    needs: prepare_matrix
+    runs-on: ubuntu-24.04
+    timeout-minutes: 1440
+    strategy:
+      fail-fast: false
+      matrix:
+        branch: ${{fromJson(needs.prepare_matrix.outputs.matrix)}}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo snap install yq
+          sudo apt-get update
+          sudo apt-get -y install openjdk-17-jdk
+          sudo apt-get -y install maven
+      - name: ssh agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
+      - name: Clone repo
+        run: |
+          ssh-keyscan -t rsa git.launchpad.net >> ~/.ssh/known_hosts
+          echo "cloning..."
+          git clone --progress --verbose ${{ secrets.REPO_KYUUBI_URL }}
+          echo "cloned!"
+          cp -r ie-tests charmed-kyuubi
+      - name: Generate uuid
+        id: uuid
+        timeout-minutes: 5
+        run: |
+          # Generate uuid
+          uuid=$(uuidgen)
+          echo "uuid=$uuid" >> $GITHUB_OUTPUT
+
+      - name: Setup maven credential
+        run: |
+          echo "Setup custom settings.xml"
+          mkdir ~/.m2
+          mv ie-tests/settings.xml  ~/.m2/settings.xml        
+      
+      - name: Run integration test
+        timeout-minutes: 900
+        env:
+          USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+          PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+          ARTIFACTORY_URL: ${{ secrets.KYUUBI_ARTIFACTORY_URL }}
+          JAVA_HOME: /usr/lib/jvm/java-1.17.0-openjdk-amd64/
+          SPARK_LOCAL_IP: localhost
+          TEST_MODULES: dev/kyuubi-codecov
+        run: |
+          echo "Check Java version"
+          which java
+          # set java version to Java 17
+          sudo update-java-alternatives -s $(sudo update-java-alternatives -l | grep '17' | cut -d " " -f1) || echo '.'
+          echo "Java version"
+          java -version
+          echo "Maven version"
+          mvn -version
+          cd charmed-kyuubi
+          cd ie-tests
+          branch=${{ matrix.branch }}
+          echo "Branch: $branch" 
+          if [ -z "$branch" ];
+          then 
+            branch="lp-1.10.2"
+          fi
+          echo "Branch to test: $branch"         
+          # /bin/bash run.sh $branch
+          mkdir logs
+          mvn clean install -pl ${TEST_MODULES} -am -Pjava-17 -Pspark-3.5 -Dspark.archive.mirror=https://archive.apache.org/dist/spark/spark-3.4.3 -Dspark.archive.name=spark-3.4.3-bin-hadoop3.tgz -Pzookeeper-3.6 -Dmaven.plugin.scalatest.exclude.tags=org.scalatest.tags.Slow,org.apache.kyuubi.tags.DeltaTest,org.apache.kyuubi.tags.IcebergTest,org.apache.kyuubi.tags.PaimonTest,org.apache.kyuubi.tags.SparkLocalClusterTest  &> logs/tests.log
+          echo "End of the test"
+          # compress logs to final upload
+          zip -r logs-${{steps.uuid.outputs.uuid }}.zip logs
+
+      - name: Upload locally built artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-logs-${{steps.uuid.outputs.uuid }}
+          path: charmed-kyuubi/ie-tests/logs-${{steps.uuid.outputs.uuid }}.zip
+      
+  validation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    needs:
+      test_kyuubi
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Checkout results
+        uses: actions/download-artifact@v4
+        with:
+          path: results/
+          pattern: integration-test-logs-*
+          merge-multiple: true
+      - name: Install python dependencies
+        run: |
+          # install requirements
+          pip install -r requirements.txt
+      - name: Print results
+        run: |
+          # run the validate script
+          python3 -m ie-tests.validate_spark  -a "results/"
+          echo "Analyis finished"
+      - name: Compress logs
+        run: |
+          zip -r all-results.zip results
+          echo "END"
+      - name: Upload all tests logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-logs-uuid
+          path: all-results.zip
