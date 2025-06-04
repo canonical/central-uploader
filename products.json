@@ -70,6 +70,20 @@
         "tarball-regex": "kafka*.tgz"
     },
     {
+        "name": "kafka-4.0",
+        "lp-building-project": "soss",
+        "lp-releasing-project": "kafka-releases",
+        "lp-building-repo": "~data-platform/soss/+source/charmed-kafka/+git/charmed-kafka/",
+        "lp-building-branch-prefix": "lp-4.0",
+        "lp-consumer-key": "LP_CONSUMER_KEY",
+        "lp-access-token": "LP_ACCESS_TOKEN",
+        "lp-access-secret": "LP_SECRET_TOKEN",
+        "artifactory-url": "https://canonical.jfrog.io/artifactory/dataplatform-maven-local/",
+        "artifactory-user": "ARTIFACTORY_USER",
+        "artifactory-token": "ARTIFACTORY_TOKEN",
+        "tarball-regex": "kafka*.tgz"
+    },
+    {
         "name": "zookeeper",
         "lp-building-project": "soss",
         "lp-releasing-project": "zookeeper-releases",
