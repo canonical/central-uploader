@@ -95,7 +95,7 @@ jobs:
           fi
           echo "Branch to test: $branch"         
           # /bin/bash run.sh $branch
-          mkdir logs
+          mkdir -p ie-tests/logs
           # to be removed!
           git checkout $branch
           ls -larth
@@ -104,7 +104,17 @@ jobs:
           ls -larth
           echo "Print rat-excludes"
           cat .rat-excludes
-          mvn clean install -pl $TEST_MODULES -am -Pjava-17 -Pspark-3.5 -Dspark.archive.mirror=https://archive.apache.org/dist/spark/spark-3.4.3 -Dspark.archive.name=spark-3.4.3-bin-hadoop3.tgz -Pzookeeper-3.6 -Dmaven.plugin.scalatest.exclude.tags=org.scalatest.tags.Slow,org.apache.kyuubi.tags.DeltaTest,org.apache.kyuubi.tags.IcebergTest,org.apache.kyuubi.tags.PaimonTest,org.apache.kyuubi.tags.SparkLocalClusterTest >> logs/kyuubi_logs.out 2> logs/kyuubi_logs.err 
+          FOLDER=$(pwd)
+          IE_FOLDER=$FOLDER/ie-tests
+          DATE=$(date +%Y%m%dH%HM%M)
+          BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          COMMIT=$(git rev-parse --short HEAD)
+          LOG_NAME=${DATE}_${BRANCH}_${RANDOM}_test
+          STD_OUT="${IE_FOLDER}/logs/${LOG_NAME}.out"
+          STD_ERR="${IE_FOLDER}/logs/${LOG_NAME}.err"
+
+          echo "Start integration tests for Kyuubi"
+          mvn clean install -pl $TEST_MODULES -am -Pjava-17 -Pspark-3.5 -Dspark.archive.mirror=https://archive.apache.org/dist/spark/spark-3.4.3 -Dspark.archive.name=spark-3.4.3-bin-hadoop3.tgz -Pzookeeper-3.6 -Dmaven.plugin.scalatest.exclude.tags=org.scalatest.tags.Slow,org.apache.kyuubi.tags.DeltaTest,org.apache.kyuubi.tags.IcebergTest,org.apache.kyuubi.tags.PaimonTest,org.apache.kyuubi.tags.SparkLocalClusterTest >> $STD_OUT 2> $STD_ERR 
           echo "End of the test"
           # compress logs to final upload
           zip -r logs-${{steps.uuid.outputs.uuid }}.zip logs
