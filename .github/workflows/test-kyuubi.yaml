@@ -95,9 +95,11 @@ jobs:
           fi
           echo "Branch to test: $branch"         
           # /bin/bash run.sh $branch
-          mkdir -p ie-tests/logs
+
           # to be removed!
           git checkout $branch
+          # create test folder
+          mkdir -p ie-tests/logs
           ls -larth
           echo "ie-tests/*" >> .rat-excludes
           echo "lp/*" >> .rat-excludes
