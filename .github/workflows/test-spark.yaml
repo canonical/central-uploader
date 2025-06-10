@@ -123,7 +123,7 @@ jobs:
       - name: Print results
         run: |
           # run the validate script
-          python3 -m ie-tests.validate_spark  -a "results/"
+          python3 -m ie-tests.validate_spark_kyuubi  -a "results/"
           echo "Analyis finished"
       - name: Compress logs
         run: |
