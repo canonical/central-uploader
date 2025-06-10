@@ -84,6 +84,20 @@
         "tarball-regex": "kafka*.tgz"
     },
     {
+        "name": "kyuubi",
+        "lp-building-project": "soss",
+        "lp-releasing-project": "kyuubi-releases",
+        "lp-building-repo": "~data-platform/soss/+source/charmed-kyuubi/+git/charmed-kyuubi/",
+        "lp-building-branch-prefix": "lp-1",
+        "lp-consumer-key": "LP_CONSUMER_KEY",
+        "lp-access-token": "LP_ACCESS_TOKEN",
+        "lp-access-secret": "LP_SECRET_TOKEN",
+        "artifactory-url": "https://canonical.jfrog.io/artifactory/dataplatform-maven-local/",
+        "artifactory-user": "ARTIFACTORY_USER",
+        "artifactory-token": "ARTIFACTORY_TOKEN",
+        "tarball-regex": "kyuubi*.tgz"
+    },
+    {
         "name": "zookeeper",
         "lp-building-project": "soss",
         "lp-releasing-project": "zookeeper-releases",
