@@ -102,6 +102,7 @@ jobs:
           mkdir -p ie-tests/logs
           ls -larth
           echo "ie-tests/*" >> .rat-excludes
+          echo "**/ie-tests/*" >> .rat-excludes
           echo "lp/*" >> .rat-excludes
           ls -larth
           echo "Print rat-excludes"
