@@ -120,7 +120,7 @@ jobs:
           ARCHIVE_NAME=spark-3.4.4-ubuntu2-20250226135921-bin-k8s.tgz
 
           echo "Start integration tests for Kyuubi"
-          mvn clean install -pl $TEST_MODULES -am -Pjava-17 -Pspark-3.5 -Dspark.archive.mirror=$CENTRAL_UPLOADER_MIRROR -Dspark.archive.name=$ARCHIVE_NAME -Pzookeeper-3.6 -Dmaven.plugin.scalatest.exclude.tags=org.scalatest.tags.Slow,org.apache.kyuubi.tags.DeltaTest,org.apache.kyuubi.tags.IcebergTest,org.apache.kyuubi.tags.PaimonTest,org.apache.kyuubi.tags.SparkLocalClusterTest >> $STD_OUT 2> $STD_ERR 
+          mvn clean install -pl $TEST_MODULES -am -Pjava-17 -Pspark-3.5 -Dspark.archive.mirror=https://archive.apache.org/dist/spark/spark-3.4.3 -Dspark.archive.name=spark-3.4.3-bin-hadoop3.tgz -Pzookeeper-3.6 -Dmaven.plugin.scalatest.exclude.tags=org.scalatest.tags.Slow,org.apache.kyuubi.tags.DeltaTest,org.apache.kyuubi.tags.IcebergTest,org.apache.kyuubi.tags.PaimonTest,org.apache.kyuubi.tags.SparkLocalClusterTest >> $STD_OUT 2> $STD_ERR 
           echo "End of the test"
           cd $IE_FOLDER
           # compress logs to final upload
