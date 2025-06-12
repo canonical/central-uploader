@@ -125,7 +125,7 @@ jobs:
           # compress logs to final upload
           zip -r logs-${{steps.uuid.outputs.uuid }}.zip logs
       - name: Setup tmate session
-        if: $${{ failure }}
+        if: $${{ failure() }}
         timeout-minutes: 20
         uses: mxschmitt/action-tmate@v3
 
