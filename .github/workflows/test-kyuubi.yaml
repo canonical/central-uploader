@@ -129,6 +129,12 @@ jobs:
         if: $${{ failure() }}
         timeout-minutes: 20
         uses: mxschmitt/action-tmate@v3
+      - name: Upload locally built artifact
+        if: $${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-logs-${{steps.uuid.outputs.uuid }}
+          path: charmed-kyuubi/ie-tests/logs-${{steps.uuid.outputs.uuid }}.zip
 
       - name: Upload locally built artifact
         uses: actions/upload-artifact@v4
