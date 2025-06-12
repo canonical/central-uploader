@@ -1,19 +1,20 @@
-name: Run Spark integration tests
+name: Run Kyuubi integration tests
 
 on:
+  pull_request:
   workflow_call:
   workflow_dispatch:
     inputs:
       branches:
         description: 'Comma-separated list of branches to test'
         required: true
-        default: 'lp-3.4.2,lp-3.4.2,lp-3.4.2'
+        default: '1.10.2'
 
 jobs:
 
   prepare_matrix:
     name: Prepare matrix
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - id: setup_matrix
         run: |
@@ -23,9 +24,9 @@ jobs:
     outputs:
       matrix: ${{ steps.setup_matrix.outputs.matrix }}
 
-  test_spark:
+  test_kyuubi:
     needs: prepare_matrix
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 1440
     strategy:
       fail-fast: false
@@ -49,9 +50,9 @@ jobs:
         run: |
           ssh-keyscan -t rsa git.launchpad.net >> ~/.ssh/known_hosts
           echo "cloning..."
-          git clone --progress --verbose ${{ secrets.REPO_SPARK_URL }}
+          git clone --progress --verbose ${{ secrets.REPO_KYUUBI_URL }}
           echo "cloned!"
-          cp -r ie-tests charmed-spark
+          cp -r ie-tests charmed-kyuubi
       - name: Generate uuid
         id: uuid
         timeout-minutes: 5
@@ -71,42 +72,81 @@ jobs:
         env:
           USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
           PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
-          ARTIFACTORY_URL: ${{ secrets.SPARK_ARTIFACTORY_URL }}
+          ARTIFACTORY_URL: ${{ secrets.KYUUBI_ARTIFACTORY_URL }}
+          JAVA_HOME: /usr/lib/jvm/java-1.17.0-openjdk-amd64/
+          SPARK_LOCAL_IP: localhost
+          TEST_MODULES: dev/kyuubi-codecov
         run: |
           echo "Check Java version"
           which java
           # set java version to Java 17
-          sudo update-java-alternatives -s $(sudo update-java-alternatives -l | grep '1\.17' | cut -d " " -f1) || echo '.'
+          sudo update-java-alternatives -s $(sudo update-java-alternatives -l | grep '17' | cut -d " " -f1) || echo '.'
           echo "Java version"
           java -version
-          export JAVA_HOME=/usr/lib/jvm/java-1.17.0-openjdk-amd64/
           echo "Maven version"
           mvn -version
-          cd charmed-spark
-          cd ie-tests
+          cd charmed-kyuubi
+          # cd ie-tests
           branch=${{ matrix.branch }}
           echo "Branch: $branch" 
           if [ -z "$branch" ];
           then 
-            branch="lp-3.4.2"
+            branch="lp-1.10.2"
           fi
           echo "Branch to test: $branch"         
-          /bin/bash run.sh $branch
+          # /bin/bash run.sh $branch
+
+          # to be removed!
+          git checkout $branch
+          # create test folder
+          mkdir -p ie-tests/logs
+          ls -larth
+          echo "ie-tests/*" >> .rat-excludes
+          echo "**/ie-tests/*" >> .rat-excludes
+          echo "lp/*" >> .rat-excludes
+          ls -larth
+          echo "Print rat-excludes"
+          cat .rat-excludes
+          FOLDER=$(pwd)
+          IE_FOLDER=$FOLDER/ie-tests
+          DATE=$(date +%Y%m%dH%HM%M)
+          BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          COMMIT=$(git rev-parse --short HEAD)
+          LOG_NAME=${DATE}_${BRANCH}_${RANDOM}_test
+          STD_OUT="${IE_FOLDER}/logs/${LOG_NAME}.out"
+          STD_ERR="${IE_FOLDER}/logs/${LOG_NAME}.err"
+
+          CENTRAL_UPLOADER_MIRROR=https://github.com/canonical/central-uploader/releases/download/spark-3.4.4-ubuntu2
+          ARCHIVE_NAME=spark-3.4.4-ubuntu2-20250226135921-bin-k8s.tgz
+
+          echo "Start integration tests for Kyuubi"
+          mvn clean install -pl $TEST_MODULES -am -Pjava-17 -Pspark-3.5 -Dspark.archive.mirror=https://archive.apache.org/dist/spark/spark-3.4.3 -Dspark.archive.name=spark-3.4.3-bin-hadoop3.tgz -Pzookeeper-3.6 -Dmaven.plugin.scalatest.exclude.tags=org.scalatest.tags.Slow,org.apache.kyuubi.tags.DeltaTest,org.apache.kyuubi.tags.IcebergTest,org.apache.kyuubi.tags.PaimonTest,org.apache.kyuubi.tags.SparkLocalClusterTest >> $STD_OUT 2> $STD_ERR 
           echo "End of the test"
+          cd $IE_FOLDER
           # compress logs to final upload
           zip -r logs-${{steps.uuid.outputs.uuid }}.zip logs
+      - name: Setup tmate session
+        if: $${{ failure() }}
+        timeout-minutes: 20
+        uses: mxschmitt/action-tmate@v3
+      - name: Upload locally built artifact
+        if: $${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-logs-${{steps.uuid.outputs.uuid }}
+          path: charmed-kyuubi/ie-tests/logs-${{steps.uuid.outputs.uuid }}.zip
 
       - name: Upload locally built artifact
         uses: actions/upload-artifact@v4
         with:
           name: integration-test-logs-${{steps.uuid.outputs.uuid }}
-          path: charmed-spark/ie-tests/logs-${{steps.uuid.outputs.uuid }}.zip
+          path: charmed-kyuubi/ie-tests/logs-${{steps.uuid.outputs.uuid }}.zip
       
   validation:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     needs:
-      test_spark
+      test_kyuubi
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -123,7 +163,7 @@ jobs:
       - name: Print results
         run: |
           # run the validate script
-          python3 -m ie-tests.validate_spark_kyuubi  -a "results/"
+          python3 -m ie-tests.validate_spark_kyuubi -a "results/"
           echo "Analyis finished"
       - name: Compress logs
         run: |
