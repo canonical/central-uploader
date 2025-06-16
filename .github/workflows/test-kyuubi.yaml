@@ -68,7 +68,7 @@ jobs:
           mv ie-tests/settings.xml  ~/.m2/settings.xml        
       
       - name: Run integration test
-        timeout-minutes: 900
+        timeout-minutes: 180
         env:
           USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
           PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
@@ -85,8 +85,10 @@ jobs:
           java -version
           echo "Maven version"
           mvn -version
+
           cd charmed-kyuubi
-          # cd ie-tests
+
+
           branch=${{ matrix.branch }}
           echo "Branch: $branch" 
           if [ -z "$branch" ];
@@ -96,17 +98,19 @@ jobs:
           echo "Branch to test: $branch"         
           # /bin/bash run.sh $branch
 
-          # to be removed!
           git checkout $branch
+
           # create test folder
           mkdir -p ie-tests/logs
-          ls -larth
+          
+          # add extra folder and files to be not scanned by rat
           echo "ie-tests/*" >> .rat-excludes
           echo "**/ie-tests/*" >> .rat-excludes
           echo "lp/*" >> .rat-excludes
           ls -larth
           echo "Print rat-excludes"
           cat .rat-excludes
+
           FOLDER=$(pwd)
           IE_FOLDER=$FOLDER/ie-tests
           DATE=$(date +%Y%m%dH%HM%M)
@@ -116,25 +120,18 @@ jobs:
           STD_OUT="${IE_FOLDER}/logs/${LOG_NAME}.out"
           STD_ERR="${IE_FOLDER}/logs/${LOG_NAME}.err"
 
-          CENTRAL_UPLOADER_MIRROR=https://github.com/canonical/central-uploader/releases/download/spark-3.4.4-ubuntu2
-          ARCHIVE_NAME=spark-3.4.4-ubuntu2-20250226135921-bin-k8s.tgz
-
           echo "Start integration tests for Kyuubi"
           mvn clean install -pl $TEST_MODULES -am -Pjava-17 -Pspark-3.5 -Dspark.archive.mirror=https://archive.apache.org/dist/spark/spark-3.4.3 -Dspark.archive.name=spark-3.4.3-bin-hadoop3.tgz -Pzookeeper-3.6 -Dmaven.plugin.scalatest.exclude.tags=org.scalatest.tags.Slow,org.apache.kyuubi.tags.DeltaTest,org.apache.kyuubi.tags.IcebergTest,org.apache.kyuubi.tags.PaimonTest,org.apache.kyuubi.tags.SparkLocalClusterTest >> $STD_OUT 2> $STD_ERR 
           echo "End of the test"
           cd $IE_FOLDER
           # compress logs to final upload
           zip -r logs-${{steps.uuid.outputs.uuid }}.zip logs
+          echo "End of the tests"
+
       - name: Setup tmate session
         if: $${{ failure() }}
         timeout-minutes: 20
         uses: mxschmitt/action-tmate@v3
-      - name: Upload locally built artifact
-        if: $${{ failure() }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: integration-test-logs-${{steps.uuid.outputs.uuid }}
-          path: charmed-kyuubi/ie-tests/logs-${{steps.uuid.outputs.uuid }}.zip
 
       - name: Upload locally built artifact
         uses: actions/upload-artifact@v4
