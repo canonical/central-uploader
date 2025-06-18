@@ -22,7 +22,7 @@ then
     TEST_COMMAND="mvn test -fn"
 fi
 
-/bin/bash ${TEST_COMMAND}
+/bin/bash "${TEST_COMMAND}"
 
 echo " "
 echo " Finished."
