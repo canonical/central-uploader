@@ -2,6 +2,7 @@
 
 function run_tests(){
     echo "START TEST"
+    TEST_COMMAND=$1
     IE_FOLDER=$(pwd)
 
     FOLDER="${IE_FOLDER}/.."
@@ -35,12 +36,13 @@ function run_tests(){
     FORMAT_TIME="\n***************************************\nTIMINGS:\n%E real\n%U user\n%S sys"
 
     echo "Before running the test!"
-    ./tests.sh "${FOLDER}" >> $STD_OUT 2> $STD_ERR
+    ./tests.sh "${FOLDER}" "${TEST_COMMAND}" >> $STD_OUT 2> $STD_ERR
 
     echo "***************************************" >> $STD_OUT
 }
 
-BRANCH=$*
+BRANCH=$1
+TEST_COMMAND=$2
 
 if [ -z "$BRANCH" ];
 then 
@@ -49,4 +51,4 @@ fi
 
 echo "Branch: ${BRANCH}"
 git checkout $BRANCH
-run_tests
+run_tests "${TEST_COMMAND}"

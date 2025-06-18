@@ -78,7 +78,7 @@ jobs:
           TEST_MODULES: dev/kyuubi-codecov
         run: |
           echo "Check Java version"
-          which java
+           which java
           # set java version to Java 17
           sudo update-java-alternatives -s $(sudo update-java-alternatives -l | grep '17' | cut -d " " -f1) || echo '.'
           echo "Java version"
@@ -96,32 +96,18 @@ jobs:
             branch="lp-1.10.2"
           fi
           echo "Branch to test: $branch"         
-          # /bin/bash run.sh $branch
 
           git checkout $branch
-
-          # create test folder
-          mkdir -p ie-tests/logs
-          
           # add extra folder and files to be not scanned by rat
           echo "ie-tests/*" >> .rat-excludes
           echo "**/ie-tests/*" >> .rat-excludes
-          echo "lp/*" >> .rat-excludes
-          ls -larth
-          echo "Print rat-excludes"
-          cat .rat-excludes
+          echo "lp/*" >> .rat-excludes       
 
-          FOLDER=$(pwd)
-          IE_FOLDER=$FOLDER/ie-tests
-          DATE=$(date +%Y%m%dH%HM%M)
-          BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          COMMIT=$(git rev-parse --short HEAD)
-          LOG_NAME=${DATE}_${BRANCH}_${RANDOM}_test
-          STD_OUT="${IE_FOLDER}/logs/${LOG_NAME}.out"
-          STD_ERR="${IE_FOLDER}/logs/${LOG_NAME}.err"
+          cd ie-tests
 
           echo "Start integration tests for Kyuubi"
-          mvn clean install -pl $TEST_MODULES -am -Pjava-17 -Pspark-3.5 -Dspark.archive.mirror=https://archive.apache.org/dist/spark/spark-3.4.3 -Dspark.archive.name=spark-3.4.3-bin-hadoop3.tgz -Pzookeeper-3.6 -Dmaven.plugin.scalatest.exclude.tags=org.scalatest.tags.Slow,org.apache.kyuubi.tags.DeltaTest,org.apache.kyuubi.tags.IcebergTest,org.apache.kyuubi.tags.PaimonTest,org.apache.kyuubi.tags.SparkLocalClusterTest >> $STD_OUT 2> $STD_ERR 
+          TEST_COMMAND="mvn clean install -pl $TEST_MODULES -am -Pjava-17 -Pspark-3.5 -Dspark.archive.mirror=https://archive.apache.org/dist/spark/spark-3.4.3 -Dspark.archive.name=spark-3.4.3-bin-hadoop3.tgz -Pzookeeper-3.6 -Dmaven.plugin.scalatest.exclude.tags=org.scalatest.tags.Slow,org.apache.kyuubi.tags.DeltaTest,org.apache.kyuubi.tags.IcebergTest,org.apache.kyuubi.tags.PaimonTest,org.apache.kyuubi.tags.SparkLocalClusterTest" 
+          /bin/bash run.sh $branch $TEST_COMMAND
           echo "End of the test"
           cd $IE_FOLDER
           # compress logs to final upload
