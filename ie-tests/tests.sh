@@ -15,7 +15,7 @@ mvn clean
 echo " "
 echo " Running tests..."
 # Run maven tests 
-if if [ -z "$TEST_COMMAND" ];
+if [ -z "$TEST_COMMAND" ];
 then 
     TEST_COMMAND="mvn test -fn"
 fi
