@@ -50,5 +50,6 @@ then
 fi
 
 echo "Branch: ${BRANCH}"
+echo "Command: ${TEST_COMMAND}"
 git checkout $BRANCH
 run_tests "${TEST_COMMAND}"

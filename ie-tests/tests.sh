@@ -3,6 +3,8 @@
 TEST_FOLDER=$1
 TEST_COMMAND=$2
 
+echo ""
+
 echo " "
 echo "Changing folder to ${TEST_FOLDER}"
 
@@ -20,7 +22,7 @@ then
     TEST_COMMAND="mvn test -fn"
 fi
 
-/bin/bash $TEST_COMMAND
+/bin/bash ${TEST_COMMAND}
 
 echo " "
 echo " Finished."
