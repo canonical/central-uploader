@@ -24,7 +24,7 @@ fi
 
 echo "Test command: $TEST_COMMAND"
 
-/bin/bash "${TEST_COMMAND}"
+$TEST_COMMAND
 
 echo " "
 echo " Finished."
