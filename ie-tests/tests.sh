@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set +x 
 TEST_FOLDER=$1
 TEST_COMMAND=$2
 
@@ -21,6 +21,8 @@ if [ -z "$TEST_COMMAND" ];
 then 
     TEST_COMMAND="mvn test -fn"
 fi
+
+echo "Test command: $TEST_COMMAND"
 
 /bin/bash "${TEST_COMMAND}"
 
