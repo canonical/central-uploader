@@ -55,7 +55,7 @@ class SparkLogParser(LogParser):
                             test_name = clean_line.split("-")[1].strip()
                             executed_modules.append(test_name)
 
-                        if "Tests:" in clean_line:
+                        if clean_line.startswith("Tests:"):
                             items = clean_line.split(",")
                             succeeded += int(items[0].split(" ")[-1])
                             failed += int(items[1].split(" ")[-1])
