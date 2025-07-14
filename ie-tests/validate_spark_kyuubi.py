@@ -20,7 +20,6 @@ def parse_args() -> Namespace:
 
 
 class SparkLogParser(LogParser):
-
     def parse_log_archive(self, log_archive: str) -> Report:
         """Parse the log archive and extract the test results."""
         filename = None
@@ -64,7 +63,18 @@ class SparkLogParser(LogParser):
                             pending += int(items[4].split(" ")[-1])
 
         total = succeeded + failed + canceled + ignored + pending
-        return Report(log_file=filename, succeeded=succeeded, failures=failed, canceled=canceled, ignored=ignored, pending=pending, total=total, executed_modules=executed_modules, raw=clean_lines, failed_tests=failed_tests)  # type: ignore
+        return Report(
+            log_file=filename,
+            succeeded=succeeded,
+            failures=failed,
+            canceled=canceled,
+            ignored=ignored,
+            pending=pending,
+            total=total,
+            executed_modules=executed_modules,
+            raw=clean_lines,
+            failed_tests=failed_tests,
+        )  # type: ignore
 
 
 if __name__ == "__main__":
