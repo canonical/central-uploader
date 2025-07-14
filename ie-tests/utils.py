@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+# Copyright 2025 Canonical Ltd.
+# See LICENSE file for licensing details.
+"""Utils for test validation module."""
+
 import re
 
 

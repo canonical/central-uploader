@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+# Copyright 2025 Canonical Ltd.
+# See LICENSE file for licensing details.
+"""Spark and Kyuubi integration test validation module."""
+
 import os
 import tempfile
 import zipfile
@@ -20,6 +25,8 @@ def parse_args() -> Namespace:
 
 
 class SparkLogParser(LogParser):
+    """Parser for the Spark/Kyyubi integration tests."""
+
     def parse_log_archive(self, log_archive: str) -> Report:
         """Parse the log archive and extract the test results."""
         filename = None
