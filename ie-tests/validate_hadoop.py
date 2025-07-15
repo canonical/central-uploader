@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+# Copyright 2025 Canonical Ltd.
+# See LICENSE file for licensing details.
+"""Hadoop integration test validation module."""
+
 import os
 import tempfile
 import zipfile
@@ -19,6 +24,7 @@ def parse_args() -> Namespace:
 
 
 class HadoopLogParser(LogParser):
+    """Parser for the Hadoop integration tests."""
 
     def parse_log_archive(self, log_archive: str) -> Report:
         """Parse the log archive and extract the test results."""
@@ -58,7 +64,17 @@ class HadoopLogParser(LogParser):
                             skipped += int(items[3].split(":")[1])
 
         total = succeeded + failures + errors + skipped
-        return Report(log_file=filename, succeeded=succeeded, errors=errors, skipped=skipped, total=total, executed_modules=executed_modules, raw=clean_lines, failed_tests=failed_tests)  # type: ignore
+        return Report(
+            log_file=filename,
+            succeeded=succeeded,
+            failures=failures,
+            errors=errors,
+            skipped=skipped,
+            total=total,
+            executed_modules=executed_modules,
+            raw=clean_lines,
+            failed_tests=failed_tests,
+        )  # type: ignore
 
 
 if __name__ == "__main__":
@@ -107,4 +123,22 @@ if __name__ == "__main__":
         )
 
     print(table)
+
+    # print failed tests over the runs
+    print("\n\n")
+    print("Test modules with errors/failures:")
+    for report in log_reports:
+        print(
+            "---------------------------------------------------------------------------"
+        )
+        print(f"Filename: {report.log_file}")
+        print(f"Number of failed tests: {len(report.failed_tests)}")
+        print(
+            "==========================================================================="
+        )
+        for failed_test in report.failed_tests:
+            print(f"\t {failed_test}")
+        print(
+            "---------------------------------------------------------------------------"
+        )
     print("End of the process.")

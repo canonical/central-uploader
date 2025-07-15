@@ -1,9 +1,16 @@
+#!/usr/bin/env python3
+# Copyright 2025 Canonical Ltd.
+# See LICENSE file for licensing details.
+"""Dataclasses and abstraction for validation module."""
+
 from abc import abstractmethod
 from dataclasses import dataclass, field
 
 
 @dataclass
 class Report:
+    """Test summary."""
+
     log_file: str = ""
     succeeded: int = 0
     failures: int = 0
@@ -19,6 +26,8 @@ class Report:
 
 
 class LogParser:
+    """Abstract parser class."""
+
     @abstractmethod
     def parse_log_archive(self, log_archive: str) -> Report:
         """Parse the log archive and extract the test results."""
