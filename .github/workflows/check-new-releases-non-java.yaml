@@ -47,6 +47,10 @@ on:
         required: true
         type: boolean
         description: The number of runs to look into.
+      architecture:
+        required: true
+        type: string
+        description: Architecture of that file
 
 env:
   LP_CREDENTIALS: credentials.txt
@@ -129,7 +133,7 @@ jobs:
         if: ${{ steps.check-release.outputs.release-package == 'true' }}
         uses: actions/upload-artifact@v4
         with:
-          name: releases-${{ inputs.name }}-${{ inputs.lp-building-branch-prefix }}
+          name: releases-${{ inputs.name }}-${{ inputs.lp-building-branch-prefix }}-${{ inputs.architecture }}
           path: ${{ env.OUTPUT_DIR }}-${{ inputs.name }}.zip
 
       - name: Generate matrix with all built versions

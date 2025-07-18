@@ -10,7 +10,8 @@
         "lp-access-token": "LP_ACCESS_TOKEN",
         "lp-access-secret": "LP_SECRET_TOKEN",
         "tarball-regex": "mongosh-*-amd64.tar.gz",
-        "check-multiple-runs": true
+        "check-multiple-runs": true,
+        "architecture": "amd64"
     },
     {
         "name": "mongosh",
@@ -23,6 +24,7 @@
         "lp-access-token": "LP_ACCESS_TOKEN",
         "lp-access-secret": "LP_SECRET_TOKEN",
         "tarball-regex": "mongosh-*-arm64.tar.gz",
-        "check-multiple-runs": true
+        "check-multiple-runs": true,
+        "architecture": "arm64"
     }
 ]
