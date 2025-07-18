@@ -22,6 +22,8 @@ PRODUCT_PATTERN = ".*-\\d+[.]\\d+[.]\\d+.*-ubuntu(0|[1-9][0-9]*)-(20\\d{2})[01][
 TAG_PATTERN = "-(20\\d{2})[01][0-9][0-3][0-9][0-2]\\d[0-5]\\d[0-5]\\d\\S*"
 RELEASE_VERSION = ".*-\\d+[.]\\d+[.]\\d+.*-ubuntu(0|[1-9][0-9]*)"
 
+PATCH_VERSION = "ubuntu(0|[1-9][0-9]*)"
+
 CUSTOM_KEYMAP = [".jar", ".pom", ".sha1", ".sha256", ".sha512"]
 
 ARCHITECTURES = ["arm64", "amd64"]
@@ -158,7 +160,11 @@ def get_patch_version(release_version: str) -> int:
     """Return the patch version from the release version."""
     if not is_valid_release_version(release_version):
         raise ValueError(f"The release version '{release_version}' is not valid!")
-    return int(release_version.split("-")[-1].replace("ubuntu", ""))
+
+    match = re.search(PATCH_VERSION, release_version)
+    if match:
+        return int(match.group(1))
+    raise ValueError(f"Invalid release_version {release_version}")
 
 
 def check_next_release_name(
