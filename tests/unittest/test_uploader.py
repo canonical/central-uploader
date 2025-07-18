@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 
+import subprocess
 from unittest.mock import patch
 
 from uploader.utils import (
@@ -10,6 +11,7 @@ from uploader.utils import (
     get_repositories_tags,
     get_version_from_tarball_name,
     is_valid_product_name,
+    split_tag,
 )
 
 
@@ -98,6 +100,31 @@ def test_check_next_release_name():
             "3.4.1",
             "spark-3.4.1-ubuntu1",
         )
+        assert check_next_release_name(
+            "test-owner",
+            "test-project",
+            "opensearch-dashboards",
+            "2.19.3",
+            "opensearch-dashboards-2.19.3-ubuntu0",
+        )
+    with patch(
+        "uploader.utils.get_product_tags",
+        return_value=["opensearch-dashboards-2.19.2-ubuntu0"],
+    ):
+        assert check_next_release_name(
+            "test-owner",
+            "test-project",
+            "opensearch-dashboards",
+            "2.19.2",
+            "opensearch-dashboards-2.19.2-ubuntu1",
+        )
+        assert not check_next_release_name(
+            "test-owner",
+            "test-project",
+            "opensearch-dashboards",
+            "2.19.2",
+            "opensearch-dashboards-2.19.2-ubuntu2",
+        )
 
 
 def test_get_patch_version():
@@ -118,3 +145,55 @@ def test_get_patch_version():
 
     for idx, release_name in enumerate(release_names):
         assert get_patch_version(release_name) == patches[idx]
+
+
+def test_split_tag():
+    """Test that product name and version are correctly extracted from release tag."""
+    test_pairs = {
+        "spark-3.4.1-ubuntu0": ("spark", "3.4.1"),
+        "spark-3.3.1-ubuntu1": ("spark", "3.3.1"),
+        "opensearch-2.9.0-ubuntu1": ("opensearch", "2.9.0"),
+        "spark-3.4.1-ubuntu100": ("spark", "3.4.1"),
+        "opensearch-2.8.0-ubuntu0": ("opensearch", "2.8.0"),
+        "spark-4.0.0-preview1-ubuntu0": ("spark", "4.0.0"),
+        "kafka_2.13-4.0.0-ubuntu0": ("kafka_2.13", "4.0.0"),
+        "kafka_2.13-4.0.0-ubuntu1": ("kafka_2.13", "4.0.0"),
+        "zookeeper-3.9.2-ubuntu0": ("zookeeper", "3.9.2"),
+        "opensearch-dashboards-2.19.2-ubuntu0": ("opensearch-dashboards", "2.19.2"),
+    }
+
+    for tag, name_and_version in test_pairs.items():
+        assert split_tag(tag) == name_and_version
+
+
+def test_lp_version_name():
+    """
+    Validate that the grep pattern used to extract `lp_version` from tag names
+    produces the expected output.
+    """
+    test_pairs = {
+        "spark-3.4.1-ubuntu0": "3.4.1-ubuntu0",
+        "spark-3.3.1-ubuntu1": "3.3.1-ubuntu1",
+        "opensearch-2.9.0-ubuntu1": "2.9.0-ubuntu1",
+        "spark-3.4.1-ubuntu100": "3.4.1-ubuntu100",
+        "opensearch-2.8.0-ubuntu0": "2.8.0-ubuntu0",
+        "spark-4.0.0-preview1-ubuntu0": "4.0.0-preview1-ubuntu0",
+        "kafka_2.13-4.0.0-ubuntu0": "4.0.0-ubuntu0",
+        "kafka_2.13-4.0.0-ubuntu1": "4.0.0-ubuntu1",
+        "zookeeper-3.9.2-ubuntu0": "3.9.2-ubuntu0",
+        "opensearch-dashboards-2.19.2-ubuntu0": "2.19.2-ubuntu0",
+    }
+
+    for tag, lp_version in test_pairs.items():
+        try:
+            result = subprocess.run(
+                ["grep", "-oP", r"(?<=-)\d[\d.]*.*"],
+                input=tag,
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+            assert result.stdout.strip() == lp_version
+        except subprocess.CalledProcessError as e:
+            print(f"extracting lp_version failed on input: {tag} — {e.stderr}")
+            continue

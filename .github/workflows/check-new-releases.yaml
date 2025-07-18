@@ -193,7 +193,7 @@ jobs:
           cd ../../
           ls
           version=$( python3 -m uploader.services get-version -n $tarball_filename )
-          lp_version=$(echo $version | cut -d'-' -f2-)
+          lp_version=$(echo $version | grep -oP '(?<=-)\d[\d.]*.*')
           if [[ -z "${{ inputs.lp-release-track-name }}" ]]; then
               track=$(echo "${{ inputs.lp-building-branch-prefix }}" | awk -F '-' '{print $NF}')
           else
