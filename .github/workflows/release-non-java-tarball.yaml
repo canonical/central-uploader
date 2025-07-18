@@ -30,7 +30,7 @@ jobs:
 
   release-products:
     secrets: inherit
-    uses: ./.github/workflows/check-new-releases.yaml
+    uses: ./.github/workflows/check-new-releases-non-java.yaml
     needs: setup-matrix
     strategy:
       fail-fast: false
@@ -49,7 +49,3 @@ jobs:
       lp-access-secret: ${{ matrix.product.lp-access-secret }}
       tarball-regex: ${{ matrix.product.tarball-regex }}
       check-multiple-runs: ${{ matrix.product.check-multiple-runs }}
-      artifactory-url: ""
-      artifactory-user: ""
-      artifactory-token: ""
-      library-regex: ""

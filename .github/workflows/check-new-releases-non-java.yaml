@@ -39,6 +39,10 @@ on:
         required: true
         type: string
         description: The access secret used to authenticate with Launchpad.
+      tarball-regex:
+        required: true
+        type: string
+        description: The regular expression to extract name of the tarball.
       check-multiple-runs:
         required: true
         type: boolean
