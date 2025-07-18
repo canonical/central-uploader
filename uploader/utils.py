@@ -73,6 +73,18 @@ def get_library_tags(repository_owner: str, project_name: str, library_name: str
     return [t for t in tags if t.startswith(f"{library_name}")]
 
 
+def split_tag(release_tag: str):
+    """
+    Extract product name and version from release tag.
+
+    eg. "opensearch-dashboards-2.19.2-ubuntu0" -> ("opensearch-dashboards", "2.19.2").
+    """
+    name_and_version = re.match(r"^(.*?)-(\d+(?:\.\d+)*)(?=-)", release_tag)
+    if not name_and_version:
+        raise ValueError(f"Invalid release tag: {release_tag}")
+    return name_and_version.group(1), name_and_version.group(2)
+
+
 def check_new_releases(
     output_directory: str,
     tarball_pattern: str,
@@ -95,8 +107,7 @@ def check_new_releases(
         assert tarball_name
         new_release_version = get_version_from_tarball_name(tarball_name)
         logger.debug(f"new release name: {new_release_version}")
-        product_name = new_release_version.split("-")[0]
-        product_version = new_release_version.split("-")[1]
+        product_name, product_version = split_tag(new_release_version)
         # check them against tags in Github
         related_tags = get_product_tags(
             repository_owner, project_name, product_name, product_version
