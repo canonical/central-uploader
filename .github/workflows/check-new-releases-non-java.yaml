@@ -65,7 +65,7 @@ jobs:
           echo "lp-building-repo: ${{ inputs.lp-building-repo }}"
           echo "lp-building-branch-prefix: ${{ inputs.lp-building-branch-prefix }}"
           echo "tarball-regex: ${{ inputs.tarball-regex }}"
-          echo "check-multiple-runs: ${{ inputs.chcek-multiple-runs }}"
+          echo "check-multiple-runs: ${{ inputs.check-multiple-runs }}"
 
       - name: Create credentials file for Launchpad
         env:
