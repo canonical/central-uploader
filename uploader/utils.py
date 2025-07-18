@@ -24,6 +24,8 @@ RELEASE_VERSION = ".*-\\d+[.]\\d+[.]\\d+.*-ubuntu(0|[1-9][0-9]*)"
 
 CUSTOM_KEYMAP = [".jar", ".pom", ".sha1", ".sha256", ".sha512"]
 
+ARCHITECTURES = ["arm64", "amd64"]
+
 
 def file_comparator(file: str) -> int:
     """Map file extension to int for upload ordering."""
@@ -245,14 +247,22 @@ def upload(
     logger.info("End of the upload process")
 
 
-def get_version_from_tarball_name(tarball_name: str) -> str:
+def get_version_from_tarball_name(tarball_name: str, multiarch: bool = False) -> str:
     """Extract the tag name that will used for the release."""
     assert is_valid_product_name(tarball_name)
 
     try:
         p = re.compile(TAG_PATTERN)
         items = p.split(tarball_name)
-        return items[0]
+        arch = None
+        if multiarch:
+            for arch in ARCHITECTURES:
+                if arch in tarball_name:
+                    break
+            arch = arch or "unknown"
+            return f"{items[0]}-{arch}"
+        else:
+            return items[0]
     except Exception as e:
         raise ValueError("ERROR") from e
 

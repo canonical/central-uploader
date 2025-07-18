@@ -21,6 +21,7 @@ class Actions(str, Enum):
     """Action enum."""
 
     VERSION = "get-version"
+    VERSION_MULTIARCH = "get-version-multiarch"
     VALID_NAME = "validate-name"
     CHECK_VERSION = "check-releases"
     CHECK_LIBRARY_VERSION = "check-library-releases"
@@ -36,6 +37,14 @@ def create_services_parser(parser: ArgumentParser) -> ArgumentParser:
         Actions.VERSION.value, help="Retrieve software version from tarball name."
     )
     parser_tag.add_argument(
+        "-n", "--name", type=str, help="The product name to be checked.", required=True
+    )
+
+    parser_tag_multiarch = subparser.add_parser(
+        Actions.VERSION_MULTIARCH.value,
+        help="Retrieve software version from tarball name.",
+    )
+    parser_tag_multiarch.add_argument(
         "-n", "--name", type=str, help="The product name to be checked.", required=True
     )
 
@@ -131,6 +140,11 @@ def main(args: Namespace):
         if not is_valid_product_name(args.name):
             raise ValueError("Invalid product name!")
         print(get_version_from_tarball_name(args.name))
+
+    elif args.action == Actions.VERSION_MULTIARCH:
+        if not is_valid_product_name(args.name):
+            raise ValueError("Invalid product name!")
+        print(get_version_from_tarball_name(args.name, multiarch=True))
 
     elif args.action == Actions.VALID_NAME:
         if not is_valid_product_name(args.name):

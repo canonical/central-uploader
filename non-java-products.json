@@ -1,0 +1,28 @@
+[
+    {
+        "name": "mongosh",
+        "lp-building-project": "git",
+        "lp-releasing-project": "mongosh-releases",
+        "lp-building-repo": "~data-platform/+git/mongosh/",
+        "lp-building-branch-prefix": "lp-2.5.5",
+        "lp-release-track-name": "2.0",
+        "lp-consumer-key": "LP_CONSUMER_KEY",
+        "lp-access-token": "LP_ACCESS_TOKEN",
+        "lp-access-secret": "LP_SECRET_TOKEN",
+        "tarball-regex": "mongosh-*-amd64.tar.gz",
+        "check-multiple-runs": true
+    },
+    {
+        "name": "mongosh",
+        "lp-building-project": "git",
+        "lp-releasing-project": "mongosh-releases",
+        "lp-building-repo": "~data-platform/+git/mongosh/",
+        "lp-building-branch-prefix": "lp-2.5.5",
+        "lp-release-track-name": "2.0",
+        "lp-consumer-key": "LP_CONSUMER_KEY",
+        "lp-access-token": "LP_ACCESS_TOKEN",
+        "lp-access-secret": "LP_SECRET_TOKEN",
+        "tarball-regex": "mongosh-*-arm64.tar.gz",
+        "check-multiple-runs": true
+    }
+]

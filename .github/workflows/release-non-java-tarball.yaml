@@ -1,0 +1,53 @@
+name: Release CI (non java tarball)
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '53 0 * * *' # Daily at 00:53 UTC
+  workflow_call:
+
+
+jobs:
+  setup-matrix:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Create matrix
+        id: set-matrix
+        run: |
+          cat non-java-products.json
+          echo "matrix=$(cat non-java-products.json | jq -c)" > $GITHUB_OUTPUT
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }} 
+
+  release-products:
+    secrets: inherit
+    uses: ./.github/workflows/check-new-releases.yaml
+    needs: setup-matrix
+    strategy:
+      fail-fast: false
+      matrix: 
+        product: ${{ fromJson(needs.setup-matrix.outputs.matrix) }}
+              
+    with:
+      name: ${{ matrix.product.name }}
+      lp-building-project: ${{ matrix.product.lp-building-project }}
+      lp-releasing-project: ${{ matrix.product.lp-releasing-project }}
+      lp-building-repo: ${{ matrix.product.lp-building-repo }}
+      lp-building-branch-prefix: ${{ matrix.product.lp-building-branch-prefix }}
+      lp-release-track-name: ${{ matrix.product.lp-release-track-name }}
+      lp-consumer-key: ${{ matrix.product.lp-consumer-key }}
+      lp-access-token: ${{ matrix.product.lp-access-token }}
+      lp-access-secret: ${{ matrix.product.lp-access-secret }}
+      tarball-regex: ${{ matrix.product.tarball-regex }}
+      check-multiple-runs: ${{ matrix.product.check-multiple-runs }}
+      artifactory-url: ""
+      artifactory-user: ""
+      artifactory-token: ""
+      library-regex: ""
