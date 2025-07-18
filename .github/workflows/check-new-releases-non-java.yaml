@@ -161,7 +161,7 @@ jobs:
       - name: Download releases
         uses: actions/download-artifact@v4
         with:
-          name: releases-${{ inputs.name }}-${{ inputs.lp-building-branch-prefix }}
+          name: releases-${{ inputs.name }}-${{ inputs.lp-building-branch-prefix }}-${{ inputs.architecture }}
 
       - name: Install Python dependencies
         run: pip install -r requirements.txt
