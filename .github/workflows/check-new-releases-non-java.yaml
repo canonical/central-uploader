@@ -187,11 +187,7 @@ jobs:
           ls
           version=$( python3 -m uploader.services get-version-multiarch -n $tarball_filename )
           lp_version=$(echo $version | cut -d'-' -f2-)
-          if [[ -z "${{ inputs.lp-release-track-name }}" ]]; then
-              track=$(echo "${{ inputs.lp-building-branch-prefix }}" | awk -F '-' '{print $NF}')
-          else
-              track=$(echo "${{ inputs.lp-release-track-name }}" | awk -F '-' '{print $NF}')
-          fi
+          track="${{ inputs.lp-release-track-name }}"
 
           echo "VERSION=$version" >> $GITHUB_OUTPUT
           echo "LP_VERSION=$lp_version" >> $GITHUB_OUTPUT
