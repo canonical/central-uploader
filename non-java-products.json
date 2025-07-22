@@ -1,0 +1,62 @@
+[
+    {
+        "name": "mongosh",
+        "lp-building-project": "git",
+        "lp-releasing-project": "mongosh-releases",
+        "lp-building-repo": "~data-platform/+git/mongosh/",
+        "lp-building-branch-prefix": "lp-noble-2",
+        "lp-release-track-name": "2.x-noble-amd64",
+        "lp-consumer-key": "LP_CONSUMER_KEY",
+        "lp-access-token": "LP_ACCESS_TOKEN",
+        "lp-access-secret": "LP_SECRET_TOKEN",
+        "tarball-regex": "mongosh-*-amd64.tar.gz",
+        "check-multiple-runs": true,
+        "architecture": "amd64",
+        "series": "noble"
+    },
+    {
+        "name": "mongosh",
+        "lp-building-project": "git",
+        "lp-releasing-project": "mongosh-releases",
+        "lp-building-repo": "~data-platform/+git/mongosh/",
+        "lp-building-branch-prefix": "lp-noble-2",
+        "lp-release-track-name": "2.x-noble-arm64",
+        "lp-consumer-key": "LP_CONSUMER_KEY",
+        "lp-access-token": "LP_ACCESS_TOKEN",
+        "lp-access-secret": "LP_SECRET_TOKEN",
+        "tarball-regex": "mongosh-*-arm64.tar.gz",
+        "check-multiple-runs": true,
+        "architecture": "arm64",
+        "series": "noble"
+    },
+    {
+        "name": "mongosh",
+        "lp-building-project": "git",
+        "lp-releasing-project": "mongosh-releases",
+        "lp-building-repo": "~data-platform/+git/mongosh/",
+        "lp-building-branch-prefix": "lp-jammy-2",
+        "lp-release-track-name": "2.x-jammy-amd64",
+        "lp-consumer-key": "LP_CONSUMER_KEY",
+        "lp-access-token": "LP_ACCESS_TOKEN",
+        "lp-access-secret": "LP_SECRET_TOKEN",
+        "tarball-regex": "mongosh-*-amd64.tar.gz",
+        "check-multiple-runs": true,
+        "architecture": "amd64",
+        "series": "jammy"
+    },
+    {
+        "name": "mongosh",
+        "lp-building-project": "git",
+        "lp-releasing-project": "mongosh-releases",
+        "lp-building-repo": "~data-platform/+git/mongosh/",
+        "lp-building-branch-prefix": "lp-jammy-2",
+        "lp-release-track-name": "2.x-jammy-arm64",
+        "lp-consumer-key": "LP_CONSUMER_KEY",
+        "lp-access-token": "LP_ACCESS_TOKEN",
+        "lp-access-secret": "LP_SECRET_TOKEN",
+        "tarball-regex": "mongosh-*-arm64.tar.gz",
+        "check-multiple-runs": true,
+        "architecture": "arm64",
+        "series": "jammy"
+    }
+]
