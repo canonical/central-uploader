@@ -49,3 +49,4 @@ jobs:
       tarball-regex: ${{ matrix.product.tarball-regex }}
       check-multiple-runs: ${{ matrix.product.check-multiple-runs }}
       architecture: ${{ matrix.product.architecture }}
+      series: ${{ matrix.product.series }}

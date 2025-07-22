@@ -47,6 +47,9 @@ def create_services_parser(parser: ArgumentParser) -> ArgumentParser:
     parser_tag_multiarch.add_argument(
         "-n", "--name", type=str, help="The product name to be checked.", required=True
     )
+    parser_tag_multiarch.add_argument(
+        "--series", type=str, help="The ubuntu series of that file."
+    )
 
     parser_validation = subparser.add_parser(Actions.VALID_NAME.value)
     parser_validation.add_argument(
@@ -144,7 +147,9 @@ def main(args: Namespace):
     elif args.action == Actions.VERSION_MULTIARCH:
         if not is_valid_product_name(args.name):
             raise ValueError("Invalid product name!")
-        print(get_version_from_tarball_name(args.name, multiarch=True))
+        print(
+            get_version_from_tarball_name(args.name, multiarch=True, series=args.series)
+        )
 
     elif args.action == Actions.VALID_NAME:
         if not is_valid_product_name(args.name):

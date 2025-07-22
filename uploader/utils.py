@@ -172,8 +172,7 @@ def get_patch_version(release_version: str) -> int:
     if not is_valid_release_version(release_version):
         raise ValueError(f"The release version '{release_version}' is not valid!")
 
-    match = re.search(PATCH_VERSION, release_version)
-    if match:
+    if match := re.search(PATCH_VERSION, release_version):
         return int(match.group(1))
     raise ValueError(f"Invalid release_version {release_version}")
 
@@ -264,22 +263,28 @@ def upload(
     logger.info("End of the upload process")
 
 
-def get_version_from_tarball_name(tarball_name: str, multiarch: bool = False) -> str:
+def get_version_from_tarball_name(
+    tarball_name: str, multiarch: bool = False, series: str | None = None
+) -> str:
     """Extract the tag name that will used for the release."""
     assert is_valid_product_name(tarball_name)
 
     try:
         p = re.compile(TAG_PATTERN)
         items = p.split(tarball_name)
+        item = items[0]
         arch = None
-        if multiarch:
-            for arch in ARCHITECTURES:
-                if arch in tarball_name:
-                    break
-            arch = arch or "unknown"
-            return f"{items[0]}-{arch}"
-        else:
-            return items[0]
+        if series:
+            item = f"{item}-{series}"
+
+        if not multiarch:
+            return item
+
+        for arch in ARCHITECTURES:
+            if arch in tarball_name:
+                break
+        arch = arch or "unknown"
+        return f"{item}-{arch}"
     except Exception as e:
         raise ValueError("ERROR") from e
 

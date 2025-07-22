@@ -51,6 +51,10 @@ on:
         required: true
         type: string
         description: Architecture of that file
+      series:
+        required: true
+        type: string
+        description: Ubuntu series of that file
 
 env:
   LP_CREDENTIALS: credentials.txt
@@ -133,7 +137,7 @@ jobs:
         if: ${{ steps.check-release.outputs.release-package == 'true' }}
         uses: actions/upload-artifact@v4
         with:
-          name: releases-${{ inputs.name }}-${{ inputs.lp-building-branch-prefix }}-${{ inputs.architecture }}
+          name: releases-${{ inputs.name }}-${{ inputs.lp-building-branch-prefix }}-${{ inputs.series }}-${{ inputs.architecture }}
           path: ${{ env.OUTPUT_DIR }}-${{ inputs.name }}.zip
 
       - name: Generate matrix with all built versions
@@ -161,7 +165,7 @@ jobs:
       - name: Download releases
         uses: actions/download-artifact@v4
         with:
-          name: releases-${{ inputs.name }}-${{ inputs.lp-building-branch-prefix }}-${{ inputs.architecture }}
+          name: releases-${{ inputs.name }}-${{ inputs.lp-building-branch-prefix }}-${{ inputs.series}}-${{ inputs.architecture }}
 
       - name: Install Python dependencies
         run: pip install -r requirements.txt
@@ -185,7 +189,7 @@ jobs:
           echo "TARBALL_FILENAME=$tarball_filename" >> $GITHUB_OUTPUT
           cd ../../
           ls
-          version=$( python3 -m uploader.services get-version-multiarch -n $tarball_filename )
+          version=$( python3 -m uploader.services get-version-multiarch -n $tarball_filename --series ${{ inputs.series }})
           lp_version=$(echo $version | cut -d'-' -f2-)
           track="${{ inputs.lp-release-track-name }}"
 
