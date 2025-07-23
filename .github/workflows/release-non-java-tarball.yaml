@@ -9,6 +9,7 @@ on:
   schedule:
     - cron: '53 0 * * *' # Daily at 00:53 UTC
   workflow_call:
+  pull_request:
 
 
 jobs:
@@ -46,6 +47,6 @@ jobs:
       lp-access-token: ${{ matrix.product.lp-access-token }}
       lp-access-secret: ${{ matrix.product.lp-access-secret }}
       tarball-regex: ${{ matrix.product.tarball-regex }}
-      check-multiple-runs: ${{ matrix.product.check-multiple-runs }}
+      check-all-runs: ${{ matrix.product.check-all-runs }}
       architecture: ${{ matrix.product.architecture }}
       series: ${{ matrix.product.series }}

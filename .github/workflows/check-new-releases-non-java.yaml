@@ -43,7 +43,7 @@ on:
         required: true
         type: string
         description: The regular expression to extract name of the tarball.
-      check-multiple-runs:
+      check-all-runs:
         required: true
         type: boolean
         description: The number of runs to look into.
@@ -77,7 +77,7 @@ jobs:
           echo "lp-building-repo: ${{ inputs.lp-building-repo }}"
           echo "lp-building-branch-prefix: ${{ inputs.lp-building-branch-prefix }}"
           echo "tarball-regex: ${{ inputs.tarball-regex }}"
-          echo "check-multiple-runs: ${{ inputs.check-multiple-runs }}"
+          echo "check-all-runs: ${{ inputs.check-all-runs }}"
 
       - name: Create credentials file for Launchpad
         env:
@@ -107,7 +107,7 @@ jobs:
             --credential-file ${{ env.LP_CREDENTIALS }} \
             --output-folder ${{ env.OUTPUT_DIR }} \
             --tarball-pattern ${{ inputs.tarball-regex }} \
-            --check-multiple-runs ${{ inputs.check-multiple-runs }}
+            --check-all-runs ${{ inputs.check-all-runs }}
       
       - name: Check if products needed to be released
         id: check-release
