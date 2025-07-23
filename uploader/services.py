@@ -21,6 +21,7 @@ class Actions(str, Enum):
     """Action enum."""
 
     VERSION = "get-version"
+    VERSION_MULTIARCH = "get-version-multiarch"
     VALID_NAME = "validate-name"
     CHECK_VERSION = "check-releases"
     CHECK_LIBRARY_VERSION = "check-library-releases"
@@ -37,6 +38,17 @@ def create_services_parser(parser: ArgumentParser) -> ArgumentParser:
     )
     parser_tag.add_argument(
         "-n", "--name", type=str, help="The product name to be checked.", required=True
+    )
+
+    parser_tag_multiarch = subparser.add_parser(
+        Actions.VERSION_MULTIARCH.value,
+        help="Retrieve software version from tarball name.",
+    )
+    parser_tag_multiarch.add_argument(
+        "-n", "--name", type=str, help="The product name to be checked.", required=True
+    )
+    parser_tag_multiarch.add_argument(
+        "--series", type=str, help="The ubuntu series of that file."
     )
 
     parser_validation = subparser.add_parser(Actions.VALID_NAME.value)
@@ -67,6 +79,12 @@ def create_services_parser(parser: ArgumentParser) -> ArgumentParser:
     )
     parser_check_version.add_argument(
         "-p", "--project-name", type=str, help="Project name.", required=True
+    )
+    parser_check_version.add_argument(
+        "-s", "--series", type=str, help="Ubuntu series.", required=False
+    )
+    parser_check_version.add_argument(
+        "--architecture", type=str, help="The architecture to use", required=False
     )
 
     parser_check_library_version = subparser.add_parser(
@@ -132,6 +150,17 @@ def main(args: Namespace):
             raise ValueError("Invalid product name!")
         print(get_version_from_tarball_name(args.name))
 
+    elif args.action == Actions.VERSION_MULTIARCH:
+        if not is_valid_product_name(args.name):
+            raise ValueError("Invalid product name!")
+        print(
+            get_version_from_tarball_name(
+                args.name,
+                series=args.series,
+                architecture=args.architecture,
+            )
+        )
+
     elif args.action == Actions.VALID_NAME:
         if not is_valid_product_name(args.name):
             raise ValueError("Invalid product name!")
@@ -142,6 +171,8 @@ def main(args: Namespace):
             args.tarball_pattern,
             args.repository_owner,
             args.project_name,
+            args.series,
+            args.architecture,
         )
     elif args.action == Actions.CHECK_LIBRARY_VERSION:
         check_new_library(

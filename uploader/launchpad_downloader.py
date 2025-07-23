@@ -85,6 +85,13 @@ def parse_args() -> Namespace:
     parser.add_argument(
         "--tarball-pattern", type=str, help="Tarball pattern name.", required=True
     )
+    parser.add_argument(
+        "--check-all-runs",
+        type=bool,
+        help="Check all runs until one tarball that matches the regex is found.",
+        required=False,
+        default=False,
+    )
     return parser.parse_args()
 
 
@@ -203,15 +210,22 @@ def main():
         if not runs:
             continue
         logger.info(f"Start downloading files for branch {branch}")
-        last_run = sorted(runs, key=lambda x: x.date_built, reverse=True)[0]
+        if args.check_all_runs:
+            last_runs = sorted(runs, key=lambda x: x.date_built, reverse=True)
+        else:
+            last_runs = [sorted(runs, key=lambda x: x.date_built, reverse=True)[0]]
 
         # check if the successful build contains the desired artifact
         artifact_exist = False
-        for url_file in last_run.artifact_urls:
-            # check if tarball is part of the build artifacts
-            file_name = unquote(str(url_file).split("/")[-1])
-            if fnmatch.fnmatch(file_name, args.tarball_pattern):
-                artifact_exist = True
+        for last_run in last_runs:
+            for url_file in last_run.artifact_urls:
+                # check if tarball is part of the build artifacts
+                file_name = unquote(str(url_file).split("/")[-1])
+                if fnmatch.fnmatch(file_name, args.tarball_pattern):
+                    artifact_exist = True
+                    break
+            if artifact_exist:
+                break
 
         logger.info(f"Artifact exist: {artifact_exist}")
         if artifact_exist:

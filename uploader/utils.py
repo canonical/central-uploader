@@ -22,6 +22,8 @@ PRODUCT_PATTERN = ".*-\\d+[.]\\d+[.]\\d+.*-ubuntu(0|[1-9][0-9]*)-(20\\d{2})[01][
 TAG_PATTERN = "-(20\\d{2})[01][0-9][0-3][0-9][0-2]\\d[0-5]\\d[0-5]\\d\\S*"
 RELEASE_VERSION = ".*-\\d+[.]\\d+[.]\\d+.*-ubuntu(0|[1-9][0-9]*)"
 
+PATCH_VERSION = "ubuntu(0|[1-9][0-9]*)"
+
 CUSTOM_KEYMAP = [".jar", ".pom", ".sha1", ".sha256", ".sha512"]
 
 
@@ -55,16 +57,20 @@ def is_valid_product_name(product_name: str) -> bool:
 
 
 def get_product_tags(
-    repository_owner: str, project_name: str, product_name: str, product_version: str
+    repository_owner: str,
+    project_name: str,
+    product_name: str,
+    product_version: str,
+    series: str | None = None,
 ):
     """Get the tags related to a product."""
+    prefix = f"{product_name}-{product_version}"
+
+    if series:
+        prefix = f"{product_name}-{product_version}-.*-{series}"
+
     tags = get_repositories_tags(repository_owner, project_name)
-    return [
-        t
-        for t in tags
-        if t.startswith(f"{product_name}-{product_version}")
-        and is_valid_release_version(t)
-    ]
+    return [t for t in tags if re.match(prefix, t) and is_valid_release_version(t)]
 
 
 def get_library_tags(repository_owner: str, project_name: str, library_name: str):
@@ -90,6 +96,8 @@ def check_new_releases(
     tarball_pattern: str,
     repository_owner: str,
     project_name: str,
+    series: str | None = None,
+    architecture: str | None = None,
 ):
     """Iterate over most recents releases and check if they need to be released."""
     assert output_directory
@@ -105,12 +113,18 @@ def check_new_releases(
             continue
         logger.debug(f"Tarball name: {tarball_name}")
         assert tarball_name
-        new_release_version = get_version_from_tarball_name(tarball_name)
+        new_release_version = get_version_from_tarball_name(
+            tarball_name, series=series, architecture=architecture
+        )
         logger.debug(f"new release name: {new_release_version}")
         product_name, product_version = split_tag(new_release_version)
         # check them against tags in Github
         related_tags = get_product_tags(
-            repository_owner, project_name, product_name, product_version
+            repository_owner,
+            project_name,
+            product_name,
+            product_version,
+            series=series,
         )
         logger.debug(f"Related tag: {related_tags}")
         # delete folder with release if already published
@@ -124,6 +138,7 @@ def check_new_releases(
             product_name,
             product_version,
             new_release_version,
+            series=series,
         )
 
     for folder in folders_to_delete:
@@ -167,7 +182,10 @@ def get_patch_version(release_version: str) -> int:
     """Return the patch version from the release version."""
     if not is_valid_release_version(release_version):
         raise ValueError(f"The release version '{release_version}' is not valid!")
-    return int(release_version.split("-")[-1].replace("ubuntu", ""))
+
+    if match := re.search(PATCH_VERSION, release_version):
+        return int(match.group(1))
+    raise ValueError(f"Invalid release_version {release_version}")
 
 
 def check_next_release_name(
@@ -176,10 +194,11 @@ def check_next_release_name(
     product_name: str,
     product_version: str,
     release_version: str,
+    series: str | None = None,
 ) -> bool:
     """Check that the new release name is valid."""
     related_tags = get_product_tags(
-        repository_owner, project_name, product_name, product_version
+        repository_owner, project_name, product_name, product_version, series=series
     )
     if not is_valid_release_version(release_version):
         raise ValueError(
@@ -256,14 +275,25 @@ def upload(
     logger.info("End of the upload process")
 
 
-def get_version_from_tarball_name(tarball_name: str) -> str:
+def get_version_from_tarball_name(
+    tarball_name: str, series: str | None = None, architecture: str | None = None
+) -> str:
     """Extract the tag name that will used for the release."""
     assert is_valid_product_name(tarball_name)
 
     try:
         p = re.compile(TAG_PATTERN)
         items = p.split(tarball_name)
-        return items[0]
+        item = items[0]
+
+        if series:
+            item = f"{item}-{series}"
+
+        if architecture:
+            item = f"{item}-{architecture}"
+
+        return item
+
     except Exception as e:
         raise ValueError("ERROR") from e
 
