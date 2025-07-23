@@ -86,9 +86,9 @@ def parse_args() -> Namespace:
         "--tarball-pattern", type=str, help="Tarball pattern name.", required=True
     )
     parser.add_argument(
-        "--check-multiple-runs",
+        "--check-all-runs",
         type=bool,
-        help="Check all runs until one is found",
+        help="Check all runs until one tarball that matches the regex is found.",
         required=False,
         default=False,
     )
@@ -210,7 +210,7 @@ def main():
         if not runs:
             continue
         logger.info(f"Start downloading files for branch {branch}")
-        if args.check_multiple_runs:
+        if args.check_all_runs:
             last_runs = sorted(runs, key=lambda x: x.date_built, reverse=True)
         else:
             last_runs = [sorted(runs, key=lambda x: x.date_built, reverse=True)[0]]
