@@ -80,6 +80,12 @@ def create_services_parser(parser: ArgumentParser) -> ArgumentParser:
     parser_check_version.add_argument(
         "-p", "--project-name", type=str, help="Project name.", required=True
     )
+    parser_check_version.add_argument(
+        "-s", "--series", type=str, help="Ubuntu series.", required=False
+    )
+    parser_check_version.add_argument(
+        "--architecture", type=str, help="The architecture to use", required=False
+    )
 
     parser_check_library_version = subparser.add_parser(
         Actions.CHECK_LIBRARY_VERSION.value,
@@ -148,7 +154,11 @@ def main(args: Namespace):
         if not is_valid_product_name(args.name):
             raise ValueError("Invalid product name!")
         print(
-            get_version_from_tarball_name(args.name, multiarch=True, series=args.series)
+            get_version_from_tarball_name(
+                args.name,
+                series=args.series,
+                architecture=args.architecture,
+            )
         )
 
     elif args.action == Actions.VALID_NAME:
@@ -161,6 +171,8 @@ def main(args: Namespace):
             args.tarball_pattern,
             args.repository_owner,
             args.project_name,
+            args.series,
+            args.architecture,
         )
     elif args.action == Actions.CHECK_LIBRARY_VERSION:
         check_new_library(

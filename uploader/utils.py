@@ -26,8 +26,6 @@ PATCH_VERSION = "ubuntu(0|[1-9][0-9]*)"
 
 CUSTOM_KEYMAP = [".jar", ".pom", ".sha1", ".sha256", ".sha512"]
 
-ARCHITECTURES = ["arm64", "amd64"]
-
 
 def file_comparator(file: str) -> int:
     """Map file extension to int for upload ordering."""
@@ -59,16 +57,20 @@ def is_valid_product_name(product_name: str) -> bool:
 
 
 def get_product_tags(
-    repository_owner: str, project_name: str, product_name: str, product_version: str
+    repository_owner: str,
+    project_name: str,
+    product_name: str,
+    product_version: str,
+    series: str | None = None,
 ):
     """Get the tags related to a product."""
+    prefix = f"{product_name}-{product_version}"
+
+    if series:
+        prefix = f"{product_name}-{product_version}-.*-{series}"
+
     tags = get_repositories_tags(repository_owner, project_name)
-    return [
-        t
-        for t in tags
-        if t.startswith(f"{product_name}-{product_version}")
-        and is_valid_release_version(t)
-    ]
+    return [t for t in tags if re.match(prefix, t) and is_valid_release_version(t)]
 
 
 def get_library_tags(repository_owner: str, project_name: str, library_name: str):
@@ -94,6 +96,8 @@ def check_new_releases(
     tarball_pattern: str,
     repository_owner: str,
     project_name: str,
+    series: str | None = None,
+    architecture: str | None = None,
 ):
     """Iterate over most recents releases and check if they need to be released."""
     assert output_directory
@@ -109,12 +113,18 @@ def check_new_releases(
             continue
         logger.debug(f"Tarball name: {tarball_name}")
         assert tarball_name
-        new_release_version = get_version_from_tarball_name(tarball_name)
+        new_release_version = get_version_from_tarball_name(
+            tarball_name, series=series, architecture=architecture
+        )
         logger.debug(f"new release name: {new_release_version}")
         product_name, product_version = split_tag(new_release_version)
         # check them against tags in Github
         related_tags = get_product_tags(
-            repository_owner, project_name, product_name, product_version
+            repository_owner,
+            project_name,
+            product_name,
+            product_version,
+            series=series,
         )
         logger.debug(f"Related tag: {related_tags}")
         # delete folder with release if already published
@@ -128,6 +138,7 @@ def check_new_releases(
             product_name,
             product_version,
             new_release_version,
+            series=series,
         )
 
     for folder in folders_to_delete:
@@ -183,10 +194,11 @@ def check_next_release_name(
     product_name: str,
     product_version: str,
     release_version: str,
+    series: str | None = None,
 ) -> bool:
     """Check that the new release name is valid."""
     related_tags = get_product_tags(
-        repository_owner, project_name, product_name, product_version
+        repository_owner, project_name, product_name, product_version, series=series
     )
     if not is_valid_release_version(release_version):
         raise ValueError(
@@ -264,7 +276,7 @@ def upload(
 
 
 def get_version_from_tarball_name(
-    tarball_name: str, multiarch: bool = False, series: str | None = None
+    tarball_name: str, series: str | None = None, architecture: str | None = None
 ) -> str:
     """Extract the tag name that will used for the release."""
     assert is_valid_product_name(tarball_name)
@@ -273,18 +285,15 @@ def get_version_from_tarball_name(
         p = re.compile(TAG_PATTERN)
         items = p.split(tarball_name)
         item = items[0]
-        arch = None
+
         if series:
             item = f"{item}-{series}"
 
-        if not multiarch:
-            return item
+        if architecture:
+            item = f"{item}-{architecture}"
 
-        for arch in ARCHITECTURES:
-            if arch in tarball_name:
-                break
-        arch = arch or "unknown"
-        return f"{item}-{arch}"
+        return item
+
     except Exception as e:
         raise ValueError("ERROR") from e
 

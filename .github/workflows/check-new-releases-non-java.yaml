@@ -116,7 +116,10 @@ jobs:
             check-releases \
             --output-directory ${{ env.OUTPUT_DIR }} \
             --tarball-pattern ${{ inputs.tarball-regex }} \
-            --repository-owner canonical --project-name ${{ github.event.repository.name }}
+            --repository-owner canonical \
+            --project-name ${{ github.event.repository.name }} \
+            --series ${{ inputs.series }}
+            --architecture ${{ inputs.architecture }}
           
           cd ${{ env.OUTPUT_DIR }};
           number_of_releases=$( ls . | wc -l )
