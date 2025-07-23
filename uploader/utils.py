@@ -22,7 +22,11 @@ PRODUCT_PATTERN = ".*-\\d+[.]\\d+[.]\\d+.*-ubuntu(0|[1-9][0-9]*)-(20\\d{2})[01][
 TAG_PATTERN = "-(20\\d{2})[01][0-9][0-3][0-9][0-2]\\d[0-5]\\d[0-5]\\d\\S*"
 RELEASE_VERSION = ".*-\\d+[.]\\d+[.]\\d+.*-ubuntu(0|[1-9][0-9]*)"
 
+PATCH_VERSION = "ubuntu(0|[1-9][0-9]*)"
+
 CUSTOM_KEYMAP = [".jar", ".pom", ".sha1", ".sha256", ".sha512"]
+
+ARCHITECTURES = ["arm64", "amd64"]
 
 
 def file_comparator(file: str) -> int:
@@ -167,7 +171,10 @@ def get_patch_version(release_version: str) -> int:
     """Return the patch version from the release version."""
     if not is_valid_release_version(release_version):
         raise ValueError(f"The release version '{release_version}' is not valid!")
-    return int(release_version.split("-")[-1].replace("ubuntu", ""))
+
+    if match := re.search(PATCH_VERSION, release_version):
+        return int(match.group(1))
+    raise ValueError(f"Invalid release_version {release_version}")
 
 
 def check_next_release_name(
@@ -256,14 +263,28 @@ def upload(
     logger.info("End of the upload process")
 
 
-def get_version_from_tarball_name(tarball_name: str) -> str:
+def get_version_from_tarball_name(
+    tarball_name: str, multiarch: bool = False, series: str | None = None
+) -> str:
     """Extract the tag name that will used for the release."""
     assert is_valid_product_name(tarball_name)
 
     try:
         p = re.compile(TAG_PATTERN)
         items = p.split(tarball_name)
-        return items[0]
+        item = items[0]
+        arch = None
+        if series:
+            item = f"{item}-{series}"
+
+        if not multiarch:
+            return item
+
+        for arch in ARCHITECTURES:
+            if arch in tarball_name:
+                break
+        arch = arch or "unknown"
+        return f"{item}-{arch}"
     except Exception as e:
         raise ValueError("ERROR") from e
 

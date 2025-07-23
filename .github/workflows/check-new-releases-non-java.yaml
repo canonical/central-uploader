@@ -1,0 +1,301 @@
+name: Check new builds and release them
+
+on:
+  workflow_call:
+    inputs:
+      name:
+        required: true
+        type: string
+        description: The name of the product to be released.
+      lp-building-project:
+        required: true
+        type: string
+        description: The LP build project of the building project.
+      lp-releasing-project:
+        required: true
+        type: string
+        description: The LP build project for the product to be released.
+      lp-building-repo:
+        required: true
+        type: string
+        description: The relative path to the LP git repo of the Product to be released.
+      lp-building-branch-prefix:
+        required: true
+        type: string
+        description: The prefix of the LP Git branches producing builds of the Product to be released.
+      lp-release-track-name:
+        required: false
+        type: string
+        description: If specified, defines the release track name. Otherwise, lp-building-branch-prefix is used.
+      lp-consumer-key:
+        required: true
+        type: string
+        description: The consumer key used to authenticate with Launchpad.
+      lp-access-token:
+        required: true
+        type: string
+        description: The access token used to authenticate with Launchpad.
+      lp-access-secret:
+        required: true
+        type: string
+        description: The access secret used to authenticate with Launchpad.
+      tarball-regex:
+        required: true
+        type: string
+        description: The regular expression to extract name of the tarball.
+      check-all-runs:
+        required: true
+        type: boolean
+        description: The number of runs to look into.
+      architecture:
+        required: true
+        type: string
+        description: Architecture of that file
+      series:
+        required: true
+        type: string
+        description: Ubuntu series of that file
+
+env:
+  LP_CREDENTIALS: credentials.txt
+  OUTPUT_DIR: output
+
+jobs:
+  download-builds:
+    name: Download build products from Launchpad
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Print passed vars
+        run: |
+          echo "name: ${{ inputs.name }}"
+          echo "lp-building-project: ${{ inputs.lp-building-project }}"
+          echo "lp-releasing-project: ${{ inputs.lp-releasing-project }}"
+          echo "lp-building-repo: ${{ inputs.lp-building-repo }}"
+          echo "lp-building-branch-prefix: ${{ inputs.lp-building-branch-prefix }}"
+          echo "tarball-regex: ${{ inputs.tarball-regex }}"
+          echo "check-all-runs: ${{ inputs.check-all-runs }}"
+
+      - name: Create credentials file for Launchpad
+        env:
+          CONSUMER_KEY: ${{ secrets[inputs.lp-consumer-key] }}
+          ACCESS_TOKEN: ${{ secrets[inputs.lp-access-token] }}
+          ACCESS_SECRET: ${{ secrets[inputs.lp-access-secret] }}
+        run: |
+          cat <<EOF >> ${{ env.LP_CREDENTIALS }}
+          [1]
+          consumer_key = ${CONSUMER_KEY}
+          consumer_secret = 
+          access_token = ${ACCESS_TOKEN}
+          access_secret = ${ACCESS_SECRET}
+          EOF
+
+      - name: Install Python dependencies for Launchpadapi lib
+        run: pip install -r requirements.txt
+
+      - name: Create folder for storing the downloaded artifacts
+        run: mkdir "${{ env.OUTPUT_DIR }}"
+
+      - name: Download the most recent built tarballs from Launchpad
+        run: |
+          python3 -m uploader.launchpad_downloader \
+            --repository-url ${{ inputs.lp-building-repo }} \
+            --branch-prefix ${{ inputs.lp-building-branch-prefix }} \
+            --credential-file ${{ env.LP_CREDENTIALS }} \
+            --output-folder ${{ env.OUTPUT_DIR }} \
+            --tarball-pattern ${{ inputs.tarball-regex }} \
+            --check-all-runs ${{ inputs.check-all-runs }}
+      
+      - name: Check if products needed to be released
+        id: check-release
+        run: |
+          python3 -m uploader.services \
+            check-releases \
+            --output-directory ${{ env.OUTPUT_DIR }} \
+            --tarball-pattern ${{ inputs.tarball-regex }} \
+            --repository-owner canonical --project-name ${{ github.event.repository.name }}
+          
+          cd ${{ env.OUTPUT_DIR }};
+          number_of_releases=$( ls . | wc -l )
+          echo "Number of remaining releases: $number_of_releases"
+          if [ $number_of_releases -lt 1 ]; then
+            echo "Nothing to update!"
+            echo "release-package=false" > $GITHUB_OUTPUT
+            exit 0
+          else
+            # set output release to true
+            echo "release-package=true" > $GITHUB_OUTPUT
+          fi
+
+      - name: List downloaded builds and compress them
+        run: ls ${{ env.OUTPUT_DIR }}; zip -r ${{ env.OUTPUT_DIR }}-${{ inputs.name }}.zip ${{ env.OUTPUT_DIR }}
+
+      - name: Store builds
+        if: ${{ steps.check-release.outputs.release-package == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: releases-${{ inputs.name }}-${{ inputs.lp-building-branch-prefix }}-${{ inputs.series }}-${{ inputs.architecture }}
+          path: ${{ env.OUTPUT_DIR }}-${{ inputs.name }}.zip
+
+      - name: Generate matrix with all built versions
+        if: ${{ steps.check-release.outputs.release-package == 'true' }}
+        id: set-matrix
+        run: |
+          echo "matrix=$(ls -A1 ${{ env.OUTPUT_DIR }} | jq -R -s -c 'split("\n")[:-1]')" > $GITHUB_OUTPUT
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      release: ${{ steps.check-release.outputs.release-package }}
+
+  release-artifact:
+    if: ${{ needs.download-builds.outputs.release == 'true' }}
+    name: Release artifact on Launchpad and Github
+    needs: download-builds
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ${{ fromJson(needs.download-builds.outputs.matrix) }}
+    steps:      
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Download releases
+        uses: actions/download-artifact@v4
+        with:
+          name: releases-${{ inputs.name }}-${{ inputs.lp-building-branch-prefix }}-${{ inputs.series}}-${{ inputs.architecture }}
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Decompress all versions and list them
+        run: |
+          unzip ${{ env.OUTPUT_DIR }}-${{ inputs.name }}.zip 
+          ls "${{ env.OUTPUT_DIR }}"
+
+      - name: Get tarball name and software version
+        id: get-tarball-name
+        run: |
+          cd output/${{ matrix.version }}/
+          count=$( ls ${{ inputs.tarball-regex }} | wc -l )
+          if [ $count != 1 ]; then
+            echo "Tarball file not found with regex: ${{ inputs.tarball-regex }}"
+            exit 1
+          fi
+          tarball_filename=$(ls ${{ inputs.tarball-regex }})
+          echo "TARBALL FILENAME: $tarball_filename"
+          echo "TARBALL_FILENAME=$tarball_filename" >> $GITHUB_OUTPUT
+          cd ../../
+          ls
+          version=$( python3 -m uploader.services get-version-multiarch -n $tarball_filename --series ${{ inputs.series }})
+          lp_version=$(echo $version | cut -d'-' -f2-)
+          track="${{ inputs.lp-release-track-name }}"
+
+          echo "VERSION=$version" >> $GITHUB_OUTPUT
+          echo "LP_VERSION=$lp_version" >> $GITHUB_OUTPUT
+          echo "TRACK=$track" >> $GITHUB_OUTPUT
+          echo "Tarball filename: $tarball_filename"
+          echo "Software version: $version"
+          echo  "Launchpad milestone: $lp_version"
+          echo "Track: $track"
+
+      - name: Create credentials file for Launchpad
+        env:
+          CONSUMER_KEY: ${{ secrets[inputs.lp-consumer-key] }}
+          ACCESS_TOKEN: ${{ secrets[inputs.lp-access-token] }}
+          ACCESS_SECRET: ${{ secrets[inputs.lp-access-secret] }}
+        run: |
+          cat <<EOF >> ${{ env.LP_CREDENTIALS }}
+          [1]
+          consumer_key = ${CONSUMER_KEY}
+          consumer_secret = 
+          access_token = ${ACCESS_TOKEN}
+          access_secret = ${ACCESS_SECRET}
+          EOF
+
+      - name: Release package on Launchpad
+        id: create-new-lp-release
+        if: ${{ inputs.lp-releasing-project != '' }}
+        run: |
+          echo "Tarball name: ${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }} | version: ${{ steps.get-tarball-name.outputs.VERSION }}"
+          lp_track=$(echo "${{ steps.get-tarball-name.outputs.TRACK }}")
+          echo "lp_track $lp_track"
+          track_length=$( echo $lp_track | wc -c )
+          if [ $track_length -lt 3 ]; then
+            lp_track+=".x"
+          fi
+          echo "lp_track $lp_track"
+          python3 -m uploader.launchpad_release \
+            --app "${{ inputs.name }}" \
+            --project "${{ inputs.lp-releasing-project }}" \
+            --track "$lp_track" \
+            --version "${{ steps.get-tarball-name.outputs.LP_VERSION }}" \
+            --tarball "${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}" \
+            --credentials ${{ env.LP_CREDENTIALS }}
+
+      - name: Release the package on Github
+        id: create-new-release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          release_name: Release ${{ steps.get-tarball-name.outputs.VERSION }}
+          tag_name: ${{ steps.get-tarball-name.outputs.VERSION }}
+
+      - name: Upload tarball
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-new-release.outputs.upload_url }}
+          asset_path: ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}
+          asset_name: ${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}
+          asset_content_type: application/zip
+
+      - name: Upload checksum
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-new-release.outputs.upload_url }}
+          asset_path: output/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}.sha512
+          asset_name: ${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}.sha512
+          asset_content_type: application/txt
+
+      - name: Delete previous latests release
+        uses: cb80/delrel@latest
+        with:
+          tag: ${{ inputs.name }}-${{ steps.get-tarball-name.outputs.TRACK }}-latest
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update latest release on Github
+        id: update-latest-release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+
+          release_name: Release ${{ inputs.name }}-${{ steps.get-tarball-name.outputs.TRACK }}-latest
+          tag_name: ${{ inputs.name }}-${{ steps.get-tarball-name.outputs.TRACK }}-latest
+
+      - name: Upload tarball
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.update-latest-release.outputs.upload_url }}
+          asset_path: ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}
+          asset_name: ${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}
+          asset_content_type: application/zip
+
+      - name: Upload checksum
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.update-latest-release.outputs.upload_url }}
+          asset_path: output/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}.sha512
+          asset_name: ${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}.sha512
+          asset_content_type: application/txt
