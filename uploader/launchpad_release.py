@@ -92,12 +92,12 @@ def upload_release_files(
     payload = {
         "content_type": "application/x-gtar",
         "description": f"{app} {track} {version}",
-        "file_content": tarball.open("rb"),
+        "file_content": tarball.read_bytes(),
         "file_type": "Code Release Tarball",
         "filename": str(tarball.name),
     }
     if signature.exists():
-        payload["signature_content"] = signature.open("rb")
+        payload["signature_content"] = signature.read_bytes()
         payload["signature_filename"] = str(signature.name)
 
     release.add_file(**payload)
