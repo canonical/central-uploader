@@ -9,7 +9,9 @@
         "lp-consumer-key": "LP_CONSUMER_KEY",
         "lp-access-token": "LP_ACCESS_TOKEN",
         "lp-access-secret": "LP_SECRET_TOKEN",
-        "tarball-regex": "opensearch-dashboards-*.tar.gz"
+        "tarball-regex": "opensearch-dashboards-*.tar.gz",
+        "architecture": "amd64",
+        "series": "noble"
     },
     {
         "name": "opensearch-dashboards",
@@ -21,6 +23,8 @@
         "lp-consumer-key": "LP_CONSUMER_KEY",
         "lp-access-token": "LP_ACCESS_TOKEN",
         "lp-access-secret": "LP_SECRET_TOKEN",
-        "tarball-regex": "opensearch-dashboards-*.tar.gz"
+        "tarball-regex": "opensearch-dashboards-*.tar.gz",
+        "architecture": "amd64",
+        "series": "noble"
     }
 ]
