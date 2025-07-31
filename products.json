@@ -127,7 +127,7 @@
         "tarball-regex": "opensearch-*.tar.gz"
     },
     {
-        "name": "opensearch-3.x",
+        "name": "opensearch",
         "lp-building-project": "soss",
         "lp-releasing-project": "opensearch-releases",
         "lp-building-repo": "~data-platform/soss/+source/opensearch-build/+git/opensearch-build/",
@@ -157,7 +157,7 @@
         "tarball-regex": "opensearch-dashboards-*.tar.gz"
     },
     {
-        "name": "opensearch-dashboards-3.x",
+        "name": "opensearch-dashboards",
         "lp-building-project": "soss",
         "lp-releasing-project": "opensearch-dashboards-releases",
         "lp-building-repo": "~data-platform/soss/+source/opensearch-build/+git/opensearch-build/",
