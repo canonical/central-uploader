@@ -118,7 +118,7 @@ jobs:
             --tarball-pattern ${{ inputs.tarball-regex }} \
             --repository-owner canonical \
             --project-name ${{ github.event.repository.name }} \
-            --series ${{ inputs.series }}
+            --series ${{ inputs.series }} \
             --architecture ${{ inputs.architecture }}
           
           cd ${{ env.OUTPUT_DIR }};
