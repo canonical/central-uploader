@@ -40,8 +40,7 @@ jobs:
         run: |
           sudo snap install yq
           sudo apt-get update
-          sudo apt-get -y install openjdk-17-jdk
-          sudo apt-get -y install maven
+          sudo apt-get install openjdk-17-jdk maven zip -y
       - name: ssh agent
         uses: webfactory/ssh-agent@v0.9.0
         with:
