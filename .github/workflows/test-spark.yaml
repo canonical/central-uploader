@@ -25,12 +25,13 @@ jobs:
 
   test_spark:
     needs: prepare_matrix
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, X64, large, jammy]
     timeout-minutes: 1440
     strategy:
       fail-fast: false
       matrix:
         branch: ${{fromJson(needs.prepare_matrix.outputs.matrix)}}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
