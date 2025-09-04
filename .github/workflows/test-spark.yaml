@@ -25,12 +25,13 @@ jobs:
 
   test_spark:
     needs: prepare_matrix
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, X64, large, jammy]
     timeout-minutes: 1440
     strategy:
       fail-fast: false
       matrix:
         branch: ${{fromJson(needs.prepare_matrix.outputs.matrix)}}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -39,8 +40,7 @@ jobs:
         run: |
           sudo snap install yq
           sudo apt-get update
-          sudo apt-get -y install openjdk-17-jdk
-          sudo apt-get -y install maven
+          sudo apt-get install openjdk-17-jdk maven zip -y
       - name: ssh agent
         uses: webfactory/ssh-agent@v0.9.0
         with:
