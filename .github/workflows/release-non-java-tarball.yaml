@@ -8,7 +8,6 @@ on:
   schedule:
     - cron: '53 0 * * *' # Daily at 00:53 UTC
   workflow_call:
-  pull_request:
 
 
 
