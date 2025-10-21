@@ -68,6 +68,7 @@ jobs:
           locales \
           libtirpc-dev \
           make \
+          maven \
           openjdk-17-jdk \
           pinentry-curses \
           pkg-config \
