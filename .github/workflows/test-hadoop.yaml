@@ -80,7 +80,8 @@ jobs:
           shellcheck \
           software-properties-common \
           valgrind \
-          yasm
+          yasm \
+          zip
 
       - name: ssh agent
         uses: webfactory/ssh-agent@v0.9.0
