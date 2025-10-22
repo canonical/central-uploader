@@ -58,18 +58,19 @@ jobs:
           git \
           gnupg-agent \
           hugo \
+          libbcprov-java \
           libtool \
           libssl-dev \
           libprotobuf-dev \
+          libprotoc-dev \
           libsasl2-dev \
           libsnappy-dev \
           libzstd-dev \
           zlib1g-dev \
           locales \
-          libtirpc-dev \
           make \
           maven \
-          openjdk-17-jdk \
+          openjdk-11-jdk \
           pinentry-curses \
           pkg-config \
           python3 \
