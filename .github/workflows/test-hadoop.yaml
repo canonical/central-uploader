@@ -70,7 +70,7 @@ jobs:
           locales \
           make \
           maven \
-          openjdk-11-jdk \
+          openjdk-17-jdk \
           pinentry-curses \
           pkg-config \
           python3 \
@@ -84,6 +84,7 @@ jobs:
           valgrind \
           yasm \
           zip
+          sudo update-java-alternatives -s $(update-java-alternatives -l | grep '17' | cut -d " " -f1) || echo '.'
 
       - name: ssh agent
         uses: webfactory/ssh-agent@v0.9.0
