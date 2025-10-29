@@ -7,7 +7,7 @@ on:
       branches:
         description: "Comma-separated list of branches to test"
         required: true
-        default: "lp-3.4.1,lp-3.4.1,lp-3.4.1"
+        default: "lp-3.4.2,lp-3.4.2,lp-3.4.2"
 
 jobs:
   prepare_matrix:
@@ -24,7 +24,7 @@ jobs:
 
   test_hadoop:
     needs: prepare_matrix
-    runs-on: [self-hosted, linux, X64, large, jammy]
+    runs-on: [self-hosted, linux, X64, large, noble]
     timeout-minutes: 1440
     strategy:
       fail-fast: false
@@ -68,6 +68,7 @@ jobs:
           libzstd-dev \
           zlib1g-dev \
           locales \
+          libtirpc-dev \
           make \
           maven \
           openjdk-17-jdk \
@@ -118,7 +119,7 @@ jobs:
           echo "Branch: $branch"
           if [ -z "$branch" ];
           then
-            branch="lp-3.4.1"
+            branch="lp-3.4.2"
           fi
           echo "Branch: $branch"
           ls
@@ -128,7 +129,7 @@ jobs:
           zip -r logs-${{steps.uuid.outputs.uuid }}.zip logs
 
       - name: Upload locally built artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: integration-test-logs-${{steps.uuid.outputs.uuid }}
           path: hadoop/ie-tests/logs-${{steps.uuid.outputs.uuid }}.zip
@@ -141,7 +142,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Checkout results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           path: results/
           pattern: integration-test-logs-*
