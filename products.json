@@ -74,7 +74,7 @@
         "lp-building-project": "soss",
         "lp-releasing-project": "kafka-releases",
         "lp-building-repo": "~data-platform/soss/+source/charmed-kafka/+git/charmed-kafka/",
-        "lp-building-branch-prefix": "lp-4.0",
+        "lp-building-branch-prefix": "lp-4",
         "lp-consumer-key": "LP_CONSUMER_KEY",
         "lp-access-token": "LP_ACCESS_TOKEN",
         "lp-access-secret": "LP_SECRET_TOKEN",
