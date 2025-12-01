@@ -70,7 +70,9 @@
         "lp-access-token": "LP_ACCESS_TOKEN",
         "lp-access-secret": "LP_SECRET_TOKEN",
         "check-all-runs": false,
-        "tarball-regex": "opensearch-dashboards-*.tar.gz"
+        "tarball-regex": "opensearch-dashboards-*.tar.gz",
+        "architecture": "amd64",
+        "series": "noble"
     },
     {
         "name": "opensearch-dashboards",
@@ -83,6 +85,8 @@
         "lp-access-token": "LP_ACCESS_TOKEN",
         "lp-access-secret": "LP_SECRET_TOKEN",
         "check-all-runs": false,
-        "tarball-regex": "opensearch-dashboards-*.tar.gz"
+        "tarball-regex": "opensearch-dashboards-*.tar.gz",
+        "architecture": "amd64",
+        "series": "noble"
     }
 ]
