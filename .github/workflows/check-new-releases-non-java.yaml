@@ -193,7 +193,7 @@ jobs:
           cd ../../
           ls
           version=$( python3 -m uploader.services get-version-multiarch -n $tarball_filename --series ${{ inputs.series }})
-          lp_version=$(echo $version | grep -oP '(?<=-)\d[\d.]*.*')
+          lp_version=$(echo $version | cut -d'-' -f2-)
           track="${{ inputs.lp-release-track-name }}"
 
           echo "VERSION=$version" >> $GITHUB_OUTPUT
