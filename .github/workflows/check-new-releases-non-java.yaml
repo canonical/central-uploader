@@ -192,8 +192,8 @@ jobs:
           echo "TARBALL_FILENAME=$tarball_filename" >> $GITHUB_OUTPUT
           cd ../../
           ls
-          version=$( python3 -m uploader.services get-version-multiarch -n $tarball_filename --series ${{ inputs.series }})
-          lp_version=$(echo $version | cut -d'-' -f2-)
+          version=$( python3 -m uploader.services get-version -n $tarball_filename)
+          lp_version=$(echo $version | grep -oP '(?<=-)\d[\d.]*.*')
           track="${{ inputs.lp-release-track-name }}"
 
           echo "VERSION=$version" >> $GITHUB_OUTPUT
