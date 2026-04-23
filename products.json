@@ -70,7 +70,7 @@
         "tarball-regex": "kafka*.tgz"
     },
     {
-        "name": "kafka-4.0",
+        "name": "kafka-4",
         "lp-building-project": "soss",
         "lp-releasing-project": "kafka-releases",
         "lp-building-repo": "~data-platform/soss/+source/charmed-kafka/+git/charmed-kafka/",
