@@ -56,7 +56,7 @@ class HadoopLogParser(LogParser):
                             test_name = clean_line.split("-")[1].strip()
                             executed_modules.append(test_name)
                             if "FAILURE" in clean_line:
-                                failed_tests.append(clean_line.split("-")[1])
+                                failed_tests.append(clean_line.rsplit("-", 1)[1])
                             items = clean_line.split(",")
                             succeeded += int(items[0].split(":")[1])
                             failures += int(items[1].split(":")[1])

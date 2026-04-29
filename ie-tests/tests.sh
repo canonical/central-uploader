@@ -12,7 +12,7 @@ cd $TEST_FOLDER
 
 echo " "
 echo " Cleaning ..."
-mvn clean
+# mvn clean
 
 echo " "
 echo " Running tests..."
