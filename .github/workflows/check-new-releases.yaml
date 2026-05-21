@@ -70,7 +70,7 @@ env:
 jobs:
   download-builds:
     name: Download build products from Launchpad
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
       - name: Checkout
@@ -159,7 +159,7 @@ jobs:
     if: ${{ needs.download-builds.outputs.release == 'true' }}
     name: Release artifact on Launchpad and Github
     needs: download-builds
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
