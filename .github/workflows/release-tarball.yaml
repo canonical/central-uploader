@@ -7,16 +7,19 @@ concurrency:
 on:
   workflow_dispatch:
   schedule:
-    - cron: '53 0 * * *' # Daily at 00:53 UTC
+    - cron: "53 0 * * *" # Daily at 00:53 UTC
   workflow_call:
+  pull_request:
 
+permissions:
+  contents: read
 
 jobs:
   setup-matrix:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
 
       - name: Create matrix
         id: set-matrix
@@ -24,7 +27,7 @@ jobs:
           cat products.json
           echo "matrix=$(cat products.json | jq -c)" > $GITHUB_OUTPUT
     outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }} 
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
 
   release-products:
     secrets: inherit
@@ -32,9 +35,11 @@ jobs:
     needs: setup-matrix
     strategy:
       fail-fast: false
-      matrix: 
+      matrix:
         product: ${{ fromJson(needs.setup-matrix.outputs.matrix) }}
-              
+    permissions:
+      contents: write
+
     with:
       name: ${{ matrix.product.name }}
       lp-building-project: ${{ matrix.product.lp-building-project }}
@@ -50,4 +55,3 @@ jobs:
       artifactory-token: ${{ matrix.product.artifactory-token }}
       tarball-regex: ${{ matrix.product.tarball-regex }}
       library-regex: ${{ matrix.product.library-regex }}
-

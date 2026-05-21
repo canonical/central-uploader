@@ -60,6 +60,9 @@ on:
         type: string
         description: The regular expression to extract name of the tarball.
 
+permissions:
+  contents: read
+
 env:
   LP_CREDENTIALS: credentials.txt
   OUTPUT_DIR: output
@@ -71,7 +74,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
 
       - name: Print passed vars
         run: |
@@ -92,7 +95,7 @@ jobs:
           cat <<EOF >> ${{ env.LP_CREDENTIALS }}
           [1]
           consumer_key = ${CONSUMER_KEY}
-          consumer_secret = 
+          consumer_secret =
           access_token = ${ACCESS_TOKEN}
           access_secret = ${ACCESS_SECRET}
           EOF
@@ -111,7 +114,7 @@ jobs:
             --credential-file ${{ env.LP_CREDENTIALS }} \
             --output-folder ${{ env.OUTPUT_DIR }} \
             --tarball-pattern ${{ inputs.tarball-regex }}
-      
+
       - name: Check if products needed to be released
         id: check-release
         run: |
@@ -120,7 +123,7 @@ jobs:
             --output-directory ${{ env.OUTPUT_DIR }} \
             --tarball-pattern ${{ inputs.tarball-regex }} \
             --repository-owner canonical --project-name ${{ github.event.repository.name }}
-          
+
           cd ${{ env.OUTPUT_DIR }};
           number_of_releases=$( ls . | wc -l )
           echo "Number of remaining releases: $number_of_releases"
@@ -138,7 +141,7 @@ jobs:
 
       - name: Store builds
         if: ${{ steps.check-release.outputs.release-package == 'true' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: releases-${{ inputs.name }}-${{ inputs.lp-building-branch-prefix }}
           path: ${{ env.OUTPUT_DIR }}-${{ inputs.name }}.zip
@@ -161,12 +164,15 @@ jobs:
       fail-fast: false
       matrix:
         version: ${{ fromJson(needs.download-builds.outputs.matrix) }}
-    steps:      
+    permissions:
+      contents: write
+
+    steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
 
       - name: Download releases
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: releases-${{ inputs.name }}-${{ inputs.lp-building-branch-prefix }}
 
@@ -175,7 +181,7 @@ jobs:
 
       - name: Decompress all versions and list them
         run: |
-          unzip ${{ env.OUTPUT_DIR }}-${{ inputs.name }}.zip 
+          unzip ${{ env.OUTPUT_DIR }}-${{ inputs.name }}.zip
           ls "${{ env.OUTPUT_DIR }}"
 
       - name: Get tarball name and software version
@@ -217,7 +223,7 @@ jobs:
           cat <<EOF >> ${{ env.LP_CREDENTIALS }}
           [1]
           consumer_key = ${CONSUMER_KEY}
-          consumer_secret = 
+          consumer_secret =
           access_token = ${ACCESS_TOKEN}
           access_secret = ${ACCESS_SECRET}
           EOF
@@ -243,69 +249,28 @@ jobs:
             --credentials ${{ env.LP_CREDENTIALS }}
 
       - name: Release the package on Github
-        id: create-new-release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v3
         with:
-          release_name: Release ${{ steps.get-tarball-name.outputs.VERSION }}
+          name: Release ${{ steps.get-tarball-name.outputs.VERSION }}
           tag_name: ${{ steps.get-tarball-name.outputs.VERSION }}
+          files: |
+            ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}
+            output/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}.sha512
 
-      - name: Upload tarball
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create-new-release.outputs.upload_url }}
-          asset_path: ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}
-          asset_name: ${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}
-          asset_content_type: application/zip
-
-      - name: Upload checksum
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create-new-release.outputs.upload_url }}
-          asset_path: output/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}.sha512
-          asset_name: ${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}.sha512
-          asset_content_type: application/txt
-
-      - name: Delete previous latests release
-        uses: cb80/delrel@latest
+      - name: Delete previous latest release
+        uses: cb80/delrel@v2
         with:
           tag: ${{ inputs.name }}-${{ steps.get-tarball-name.outputs.TRACK }}-latest
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update latest release on Github
-        id: update-latest-release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v3
         with:
-
-          release_name: Release ${{ inputs.name }}-${{ steps.get-tarball-name.outputs.TRACK }}-latest
+          name: Release ${{ inputs.name }}-${{ steps.get-tarball-name.outputs.TRACK }}-latest
           tag_name: ${{ inputs.name }}-${{ steps.get-tarball-name.outputs.TRACK }}-latest
-
-      - name: Upload tarball
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.update-latest-release.outputs.upload_url }}
-          asset_path: ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}
-          asset_name: ${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}
-          asset_content_type: application/zip
-
-      - name: Upload checksum
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.update-latest-release.outputs.upload_url }}
-          asset_path: output/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}.sha512
-          asset_name: ${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}.sha512
-          asset_content_type: application/txt
+          files: |
+            ${{ env.OUTPUT_DIR }}/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}
+            output/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}.sha512
 
       - name: Upload Java dependencies to artifactory
         if: ${{ inputs.library-regex != '' }}
