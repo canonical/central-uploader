@@ -258,7 +258,7 @@ jobs:
             output/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}.sha512
 
       - name: Delete previous latest release
-        uses: cb80/delrel@v2
+        uses: cb80/delrel@v0.19.0
         with:
           tag: ${{ inputs.name }}-${{ steps.get-tarball-name.outputs.TRACK }}-latest
           token: ${{ secrets.GITHUB_TOKEN }}
