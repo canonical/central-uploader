@@ -132,7 +132,7 @@ def main():
     """Download and store latest release artifacts for the release branches of a product."""
     args = parse_args()
 
-    logger.debug("Split archive if size is greater than 1GB")
+    logger.debug("Split archive if size is greater than 500MB")
     # split files if needed
     # this operation need to be done at the beginning otherwise there will be a timeout from lauchpadlib
     # many times instead of timeout we get a SSL error.
