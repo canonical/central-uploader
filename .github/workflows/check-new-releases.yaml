@@ -249,7 +249,7 @@ jobs:
             --credentials ${{ env.LP_CREDENTIALS }}
 
       - name: Release the package on Github
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
           name: Release ${{ steps.get-tarball-name.outputs.VERSION }}
           tag_name: ${{ steps.get-tarball-name.outputs.VERSION }}
@@ -258,13 +258,13 @@ jobs:
             output/${{ matrix.version }}/${{ steps.get-tarball-name.outputs.TARBALL_FILENAME }}.sha512
 
       - name: Delete previous latest release
-        uses: cb80/delrel@v0.19.0
+        uses: cb80/delrel@d06f884e9f5bc82bddf8fdd0059d09083d8b3215 # v0.19.0
         with:
           tag: ${{ inputs.name }}-${{ steps.get-tarball-name.outputs.TRACK }}-latest
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update latest release on Github
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
           name: Release ${{ inputs.name }}-${{ steps.get-tarball-name.outputs.TRACK }}-latest
           tag_name: ${{ inputs.name }}-${{ steps.get-tarball-name.outputs.TRACK }}-latest
