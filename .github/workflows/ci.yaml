@@ -9,14 +9,17 @@ concurrency:
 on:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   lint:
     name: Lint
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
       - name: Install tox and poetry
         run: |
           python3 -m pip install tox
@@ -28,11 +31,11 @@ jobs:
 
   unit-test:
     name: Unit tests
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
       - name: Install tox and poetry
         run: |
           python3 -m pip install tox

@@ -52,7 +52,7 @@ def _get_tokenized_librarian_url(lp: Launchpad, file_url: str) -> str:
         logger.debug(ret)
         raise AssertionError("No redirect to download from, we can't proceed")
     except httplib2.RedirectLimit as e:
-        return str(e.response["location"])
+        return str(e.response["location"])  # type: ignore
 
 
 def parse_args() -> Namespace:
