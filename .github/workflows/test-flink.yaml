@@ -43,7 +43,7 @@ jobs:
         run: |
           sudo snap install yq
           sudo apt update
-          sudo apt install -y maven python3-dev gosu locales make less build-essential curl libapr1 unzip uuid-runtime jq bsdmainutils wget psmisc software-properties-common apt-transport-https
+          sudo apt install -y apt-transport-https bsdmainutils build-essential curl gosu jq less libapr1 locales make maven psmisc python3-dev software-properties-common unzip uuid-runtime wget zip
 
       - uses: actions/setup-java@v5
         with:
