@@ -28,7 +28,6 @@ class HadoopLogParser(LogParser):
 
     def parse_log_archive(self, log_archive: str) -> Report:
         """Parse the log archive and extract the test results."""
-        filename = None
         succeeded = 0
         failures = 0
         errors = 0
@@ -45,7 +44,6 @@ class HadoopLogParser(LogParser):
                 for log_file in log_files:
                     if ".out" not in log_file:
                         continue
-                    filename = log_file
                     print("Analyzed log file: " + log_file)
                     file = open(f"{log_directory}/{log_file}", "r")
                     # Read each line in the file
@@ -65,7 +63,7 @@ class HadoopLogParser(LogParser):
 
         total = succeeded + failures + errors + skipped
         return Report(
-            log_file=filename,
+            log_file=os.path.basename(log_archive),
             succeeded=succeeded,
             failures=failures,
             errors=errors,
