@@ -185,7 +185,7 @@ jobs:
           pip install -r requirements.txt
       - name: Print results
         run: |
-          python3 -m ie-tests.validate_hadoop -a "results/"
+          python3 -m ie-tests.validate_hadoop_flink -a "results/"
           echo "Analyis finished"
       - name: Compress logs
         run: |
