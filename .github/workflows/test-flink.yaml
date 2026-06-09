@@ -116,37 +116,35 @@ jobs:
           echo "Start tests suite for Flink"
           echo "Running core-group1 tests suite"
           ./mvnw \
-            -DargLine="-Xmx512m -XX:+UseSerialGC -Xss256k -XX:MaxMetaspaceSize=128m -Dio.netty.maxDirectMemory=64m" \
+            -DargLine="-Xmx512m -XX:+UseSerialGC -Xss256k -XX:MaxMetaspaceSize=128m -Dio.netty.maxDirectMemory=64m -XX:MaxDirectMemorySize=64m -XX:ReservedCodeCacheSize=64m -XX:CICompilerCount=2 -Dorg.apache.flink.shaded.netty4.io.netty.handler.ssl.noOpenSsl=true -Dio.netty.handler.ssl.noOpenSsl=true -Djdk.tls.disabledAlgorithms= -Djdk.certpath.disabledAlgorithms=" \
             -Dsurefire.forkCount=1 -DreuseForks=false \
             -Dflink.tests.check-segment-multiple-free -Darchunit.freeze.store.default.allowStoreUpdate=false -Dinclude_hadoop_aws -Djdk17 -Pjava17-target -Pgithub-actions -Drat.skip=true \
             -pl flink-annotations,flink-test-utils-parent/flink-test-utils,flink-state-backends,flink-state-backends/flink-statebackend-changelog,flink-state-backends/flink-statebackend-heap-spillable,flink-state-backends/flink-statebackend-rocksdb,flink-state-backends/flink-statebackend-forst,flink-clients,flink-core,flink-rpc,flink-rpc/flink-rpc-core,flink-rpc/flink-rpc-akka,flink-rpc/flink-rpc-akka-loader,flink-runtime \
-            -fn verify >> "logs/logs-${branch}-core1.out"
+            -fn verify > "logs/logs-${branch}-core1.out"
 
           echo "Running core-group2 tests suite"
           ./mvnw \
-            -DargLine="-Xmx512m -XX:+UseSerialGC -Xss256k -XX:MaxMetaspaceSize=128m -Dio.netty.maxDirectMemory=64m" \
+            -DargLine="-Xmx512m -XX:+UseSerialGC -Xss256k -XX:MaxMetaspaceSize=128m -Dio.netty.maxDirectMemory=64m -XX:MaxDirectMemorySize=64m -XX:ReservedCodeCacheSize=64m -XX:CICompilerCount=2 -Dorg.apache.flink.shaded.netty4.io.netty.handler.ssl.noOpenSsl=true -Dio.netty.handler.ssl.noOpenSsl=true -Djdk.tls.disabledAlgorithms= -Djdk.certpath.disabledAlgorithms=" \
             -Dsurefire.forkCount=1 -DreuseForks=false \
             -Dflink.tests.check-segment-multiple-free -Darchunit.freeze.store.default.allowStoreUpdate=false -Dinclude_hadoop_aws -Djdk17 -Pjava17-target -Pgithub-actions -Drat.skip=true \
             -pl flink-runtime-web,flink-streaming-java \
-            -fn verify >> "logs/logs-${branch}-core2.out"
+            -fn verify > "logs/logs-${branch}-core2.out"
 
           echo "Running core-group3 suite"
           ./mvnw \
-            -DargLine="-Xmx512m -XX:+UseSerialGC -Xss256k -XX:MaxMetaspaceSize=128m -Dio.netty.maxDirectMemory=64m" \
+            -DargLine="-Xmx512m -XX:+UseSerialGC -Xss256k -XX:MaxMetaspaceSize=128m -Dio.netty.maxDirectMemory=64m -XX:MaxDirectMemorySize=64m -XX:ReservedCodeCacheSize=64m -XX:CICompilerCount=2 -Dorg.apache.flink.shaded.netty4.io.netty.handler.ssl.noOpenSsl=true -Dio.netty.handler.ssl.noOpenSsl=true -Djdk.tls.disabledAlgorithms= -Djdk.certpath.disabledAlgorithms=" \
             -Dsurefire.forkCount=1 -DreuseForks=false \
             -Dflink.tests.check-segment-multiple-free -Darchunit.freeze.store.default.allowStoreUpdate=false -Dinclude_hadoop_aws -Djdk17 -Pjava17-target -Pgithub-actions -Drat.skip=true \
-            -Dflink.tests.check-segment-multiple-free -Darchunit.freeze.store.default.allowStoreUpdate=false -Dinclude_hadoop_aws -Djdk17 -Pjava17-target -Pgithub-actions -Drat.skip=true \
             -pl flink-metrics,flink-metrics/flink-metrics-core,flink-external-resources,flink-external-resources/flink-external-resource-gpu,flink-libraries,flink-libraries/flink-cep,flink-libraries/flink-state-processing-api,flink-queryable-state,flink-queryable-state/flink-queryable-state-runtime,flink-queryable-state/flink-queryable-state-client-java,flink-container,flink-dstl,flink-dstl/flink-dstl-dfs \
-            -fn verify >> "logs/logs-${branch}-core3.out"
+            -fn verify > "logs/logs-${branch}-core3.out"
 
           echo "Running table suite"
           ./mvnw \
-            -DargLine="-Xmx512m -XX:+UseSerialGC -Xss256k -XX:MaxMetaspaceSize=128m -Dio.netty.maxDirectMemory=64m" \
+            -DargLine="-Xmx512m -XX:+UseSerialGC -Xss256k -XX:MaxMetaspaceSize=128m -Dio.netty.maxDirectMemory=64m -XX:MaxDirectMemorySize=64m -XX:ReservedCodeCacheSize=64m -XX:CICompilerCount=2 -Dorg.apache.flink.shaded.netty4.io.netty.handler.ssl.noOpenSsl=true -Dio.netty.handler.ssl.noOpenSsl=true -Djdk.tls.disabledAlgorithms= -Djdk.certpath.disabledAlgorithms=" \
             -Dsurefire.forkCount=1 -DreuseForks=false \
             -Dflink.tests.check-segment-multiple-free -Darchunit.freeze.store.default.allowStoreUpdate=false -Dinclude_hadoop_aws -Djdk17 -Pjava17-target -Pgithub-actions -Drat.skip=true \
-            -Dflink.tests.check-segment-multiple-free -Darchunit.freeze.store.default.allowStoreUpdate=false -Dinclude_hadoop_aws -Djdk17 -Pjava17-target -Pgithub-actions -Drat.skip=true \
             -pl flink-table,flink-table/flink-sql-parser,flink-table/flink-table-common,flink-table/flink-table-api-java,flink-table/flink-table-api-scala,flink-table/flink-table-api-bridge-base,flink-table/flink-table-api-java-bridge,flink-table/flink-table-api-scala-bridge,flink-table/flink-table-api-java-uber,flink-table/flink-sql-client,flink-table/flink-sql-gateway-api,flink-table/flink-sql-gateway,flink-table/flink-table-planner,flink-table/flink-table-planner-loader,flink-table/flink-table-planner-loader-bundle,flink-table/flink-table-runtime,flink-table/flink-table-code-splitter,flink-table/flink-table-test-utils \
-            -fn verify >> "logs/logs-${branch}-table.out"
+            -fn verify > "logs/logs-${branch}-table.out"
 
           echo "End of the test"
           cat logs/*.out
