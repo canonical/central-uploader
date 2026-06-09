@@ -120,7 +120,7 @@ jobs:
             -Dsurefire.forkCount=1 -DreuseForks=false \
             -Dflink.tests.check-segment-multiple-free -Darchunit.freeze.store.default.allowStoreUpdate=false -Dinclude_hadoop_aws -Djdk17 -Pjava17-target -Pgithub-actions -Drat.skip=true \
             -pl flink-annotations,flink-test-utils-parent/flink-test-utils,flink-state-backends,flink-state-backends/flink-statebackend-changelog,flink-state-backends/flink-statebackend-heap-spillable,flink-state-backends/flink-statebackend-rocksdb,flink-state-backends/flink-statebackend-forst,flink-clients,flink-core,flink-rpc,flink-rpc/flink-rpc-core,flink-rpc/flink-rpc-akka,flink-rpc/flink-rpc-akka-loader,flink-runtime \
-            -fn verify > "logs/logs-${branch}-core1.out"
+            -fn verify > "logs/logs-${{ matrix.branch }}-${{ steps.uuid.outputs.uuid }}-core1.out"
 
           echo "Running core-group2 tests suite"
           ./mvnw \
@@ -128,7 +128,7 @@ jobs:
             -Dsurefire.forkCount=1 -DreuseForks=false \
             -Dflink.tests.check-segment-multiple-free -Darchunit.freeze.store.default.allowStoreUpdate=false -Dinclude_hadoop_aws -Djdk17 -Pjava17-target -Pgithub-actions -Drat.skip=true \
             -pl flink-runtime-web,flink-streaming-java \
-            -fn verify > "logs/logs-${branch}-core2.out"
+            -fn verify > "logs/logs-${{ matrix.branch }}-${{ steps.uuid.outputs.uuid }}-core2.out"
 
           echo "Running core-group3 suite"
           ./mvnw \
@@ -136,7 +136,7 @@ jobs:
             -Dsurefire.forkCount=1 -DreuseForks=false \
             -Dflink.tests.check-segment-multiple-free -Darchunit.freeze.store.default.allowStoreUpdate=false -Dinclude_hadoop_aws -Djdk17 -Pjava17-target -Pgithub-actions -Drat.skip=true \
             -pl flink-metrics,flink-metrics/flink-metrics-core,flink-external-resources,flink-external-resources/flink-external-resource-gpu,flink-libraries,flink-libraries/flink-cep,flink-libraries/flink-state-processing-api,flink-queryable-state,flink-queryable-state/flink-queryable-state-runtime,flink-queryable-state/flink-queryable-state-client-java,flink-container,flink-dstl,flink-dstl/flink-dstl-dfs \
-            -fn verify > "logs/logs-${branch}-core3.out"
+            -fn verify > "logs/logs-${{ matrix.branch }}-${{ steps.uuid.outputs.uuid }}-core3.out"
 
           echo "Running table suite"
           ./mvnw \
@@ -144,7 +144,7 @@ jobs:
             -Dsurefire.forkCount=1 -DreuseForks=false \
             -Dflink.tests.check-segment-multiple-free -Darchunit.freeze.store.default.allowStoreUpdate=false -Dinclude_hadoop_aws -Djdk17 -Pjava17-target -Pgithub-actions -Drat.skip=true \
             -pl flink-table,flink-table/flink-sql-parser,flink-table/flink-table-common,flink-table/flink-table-api-java,flink-table/flink-table-api-scala,flink-table/flink-table-api-bridge-base,flink-table/flink-table-api-java-bridge,flink-table/flink-table-api-scala-bridge,flink-table/flink-table-api-java-uber,flink-table/flink-sql-client,flink-table/flink-sql-gateway-api,flink-table/flink-sql-gateway,flink-table/flink-table-planner,flink-table/flink-table-planner-loader,flink-table/flink-table-planner-loader-bundle,flink-table/flink-table-runtime,flink-table/flink-table-code-splitter,flink-table/flink-table-test-utils \
-            -fn verify > "logs/logs-${branch}-table.out"
+            -fn verify > "logs/logs-${{ matrix.branch }}-${{ steps.uuid.outputs.uuid }}-table.out"
 
           echo "Running connect suite"
           ./mvnw \
@@ -152,19 +152,19 @@ jobs:
             -Dsurefire.forkCount=1 -DreuseForks=false \
             -Dflink.tests.check-segment-multiple-free -Darchunit.freeze.store.default.allowStoreUpdate=false -Dinclude_hadoop_aws -Djdk17 -Pjava17-target -Pgithub-actions -Drat.skip=true \
             -pl flink-filesystems,flink-filesystems/flink-azure-fs-hadoop,flink-filesystems/flink-fs-hadoop-shaded,flink-filesystems/flink-gs-fs-hadoop,flink-filesystems/flink-hadoop-fs,flink-filesystems/flink-oss-fs-hadoop,flink-filesystems/flink-s3-fs-base,flink-filesystems/flink-s3-fs-hadoop,flink-filesystems/flink-s3-fs-presto,flink-fs-tests,flink-formats,flink-formats/flink-format-common,flink-formats/flink-avro-confluent-registry,flink-formats/flink-sql-avro-confluent-registry,flink-formats/flink-avro,flink-formats/flink-sql-avro,flink-formats/flink-compress,flink-formats/flink-hadoop-bulk,flink-formats/flink-parquet,flink-formats/flink-sql-parquet,flink-formats/flink-sequence-file,flink-formats/flink-json,flink-formats/flink-csv,flink-formats/flink-orc,flink-formats/flink-sql-orc,flink-formats/flink-orc-nohive,flink-connectors/flink-file-sink-common,flink-connectors/flink-hadoop-compatibility,flink-connectors,flink-connectors/flink-connector-files,flink-metrics/flink-metrics-dropwizard,flink-metrics/flink-metrics-graphite,flink-metrics/flink-metrics-jmx,flink-metrics/flink-metrics-influxdb,flink-metrics/flink-metrics-prometheus,flink-metrics/flink-metrics-statsd,flink-metrics/flink-metrics-datadog,flink-metrics/flink-metrics-slf4j,flink-metrics/flink-metrics-otel,flink-connectors/flink-connector-base,flink-models/flink-model-openai,flink-models/flink-model-triton \
-            -fn verify > "logs/logs-${branch}-connect.out"
+            -fn verify > "logs/logs-${{ matrix.branch }}-${{ steps.uuid.outputs.uuid }}-connect.out"
 
           echo "End of the tests, displaying logs"
           cat logs/*.out
           echo "Creating archive of tests logs"
-          zip -r logs-${{steps.uuid.outputs.uuid }}.zip logs
+          zip -r logs-${{ matrix.branch }}-${{ steps.uuid.outputs.uuid }}.zip logs
 
       - name: Upload locally built artifact
         uses: actions/upload-artifact@v7
         continue-on-error: true
         with:
-          name: integration-test-logs-${{steps.uuid.outputs.uuid }}
-          path: charmed-flink/logs-${{steps.uuid.outputs.uuid }}.zip
+          name: integration-test-logs-${{ matrix.branch }}-${{ steps.uuid.outputs.uuid }}
+          path: charmed-flink/logs-${{ matrix.branch }}-${{ steps.uuid.outputs.uuid }}.zip
 
   validation:
     runs-on: ubuntu-24.04
