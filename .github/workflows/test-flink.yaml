@@ -2,7 +2,6 @@ name: Run Flink tests suite
 
 on:
   workflow_call:
-  pull_request:
   workflow_dispatch:
     inputs:
       branches:
@@ -24,8 +23,7 @@ jobs:
           echo "matrix=[\"${input//,/\",\"}\"]" >> $GITHUB_OUTPUT
           echo "[\"${input//,/\",\"}\"]"
     outputs:
-      # matrix: ${{ steps.setup_matrix.outputs.matrix }}
-      matrix: '["lp-2.2.0","release-2.2.0-ubuntu0"]'
+      matrix: ${{ steps.setup_matrix.outputs.matrix }}
 
   test_flink:
     needs: prepare_matrix
@@ -107,7 +105,6 @@ jobs:
           echo "**/ie-tests/*" >> .rat-excludes
           echo "lp/*" >> .rat-excludes
 
-          # cd ie-tests
           mkdir logs
 
           echo "Start Flink build"
