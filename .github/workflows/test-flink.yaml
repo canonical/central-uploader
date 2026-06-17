@@ -1,0 +1,195 @@
+name: Run Flink tests suite
+
+on:
+  workflow_call:
+  workflow_dispatch:
+    inputs:
+      branches:
+        description: "Comma-separated list of branches to test"
+        required: true
+        default: "lp-2.2.0"
+
+permissions:
+  contents: read
+
+jobs:
+  prepare_matrix:
+    name: Prepare matrix
+    runs-on: ubuntu-24.04
+    steps:
+      - id: setup_matrix
+        run: |
+          input=${{ inputs.branches }}
+          echo "matrix=[\"${input//,/\",\"}\"]" >> $GITHUB_OUTPUT
+          echo "[\"${input//,/\",\"}\"]"
+    outputs:
+      matrix: ${{ steps.setup_matrix.outputs.matrix }}
+
+  test_flink:
+    needs: prepare_matrix
+    runs-on: ["self-hosted-linux-amd64-jammy-xlarge"]
+    timeout-minutes: 1440
+    strategy:
+      fail-fast: false
+      matrix:
+        branch: ${{fromJson(needs.prepare_matrix.outputs.matrix)}}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          sudo snap install yq
+          sudo apt update
+          sudo apt install -y apt-transport-https bsdmainutils build-essential curl gosu jq less libapr1 locales make maven psmisc python3-dev software-properties-common unzip uuid-runtime wget zip
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: ssh agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
+
+      - name: Clone repo
+        run: |
+          ssh-keyscan -t rsa git.launchpad.net >> ~/.ssh/known_hosts
+          echo "cloning..."
+          git clone --progress --verbose ${{ secrets.REPO_FLINK_URL }}
+          echo "cloned!"
+          cp -r ie-tests charmed-flink
+
+          cd charmed-flink
+          branch=${{ matrix.branch }}
+          echo "Branch: $branch"
+          if [ -z "$branch" ];
+          then
+            branch="lp-2.2.0"
+          fi
+          echo "Branch to test: $branch"
+
+          git checkout $branch
+
+      - name: Generate uuid
+        id: uuid
+        timeout-minutes: 5
+        run: |
+          # Generate uuid
+          uuid=$(uuidgen)
+          echo "uuid=$uuid" >> $GITHUB_OUTPUT
+
+      - name: Setup maven credential
+        run: |
+          echo "Setup custom settings.xml"
+          mkdir -p ~/.m2
+          cd charmed-flink
+          mvn wrapper:wrapper -Dmaven=3.8.6 -Dtype=bin
+          mv ie-tests/settings.xml  ~/.m2/settings.xml
+
+      - name: Run integration test
+        timeout-minutes: 180
+        env:
+          USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+          PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+          ARTIFACTORY_URL: ${{ secrets.FLINK_ARTIFACTORY_URL }}
+        run: |
+
+          cd charmed-flink
+          echo "Maven version"
+          ./mvnw -version
+
+          # add extra folder and files to be not scanned by rat
+          echo "ie-tests/*" >> .rat-excludes
+          echo "**/ie-tests/*" >> .rat-excludes
+          echo "lp/*" >> .rat-excludes
+
+          mkdir logs
+
+          echo "Start Flink build"
+          ./mvnw clean -DskipTests -Dinclude_hadoop_aws -Djdk17 -Pjava17-target -Pgithub-actions -Drat.skip=true install > /dev/null
+
+          echo "Start tests suite for Flink"
+          echo "Running core-group1 tests suite"
+          ./mvnw \
+            -DargLine="-Xmx512m -XX:+UseSerialGC -Xss256k -XX:MaxMetaspaceSize=128m -Dio.netty.maxDirectMemory=64m -XX:MaxDirectMemorySize=64m -XX:ReservedCodeCacheSize=64m -XX:CICompilerCount=2 -Dorg.apache.flink.shaded.netty4.io.netty.handler.ssl.noOpenSsl=true -Dio.netty.handler.ssl.noOpenSsl=true -Djdk.tls.disabledAlgorithms= -Djdk.certpath.disabledAlgorithms=" \
+            -Dsurefire.forkCount=1 -DreuseForks=false \
+            -Dflink.tests.check-segment-multiple-free -Darchunit.freeze.store.default.allowStoreUpdate=false -Dinclude_hadoop_aws -Djdk17 -Pjava17-target -Pgithub-actions -Drat.skip=true \
+            -pl flink-annotations,flink-test-utils-parent/flink-test-utils,flink-state-backends,flink-state-backends/flink-statebackend-changelog,flink-state-backends/flink-statebackend-heap-spillable,flink-state-backends/flink-statebackend-rocksdb,flink-state-backends/flink-statebackend-forst,flink-clients,flink-core,flink-rpc,flink-rpc/flink-rpc-core,flink-rpc/flink-rpc-akka,flink-rpc/flink-rpc-akka-loader,flink-runtime \
+            -fn verify > "logs/logs-${{ matrix.branch }}-${{ steps.uuid.outputs.uuid }}-core1.out"
+
+          echo "Running core-group2 tests suite"
+          ./mvnw \
+            -DargLine="-Xmx512m -XX:+UseSerialGC -Xss256k -XX:MaxMetaspaceSize=128m -Dio.netty.maxDirectMemory=64m -XX:MaxDirectMemorySize=64m -XX:ReservedCodeCacheSize=64m -XX:CICompilerCount=2 -Dorg.apache.flink.shaded.netty4.io.netty.handler.ssl.noOpenSsl=true -Dio.netty.handler.ssl.noOpenSsl=true -Djdk.tls.disabledAlgorithms= -Djdk.certpath.disabledAlgorithms=" \
+            -Dsurefire.forkCount=1 -DreuseForks=false \
+            -Dflink.tests.check-segment-multiple-free -Darchunit.freeze.store.default.allowStoreUpdate=false -Dinclude_hadoop_aws -Djdk17 -Pjava17-target -Pgithub-actions -Drat.skip=true \
+            -pl flink-runtime-web,flink-streaming-java \
+            -fn verify > "logs/logs-${{ matrix.branch }}-${{ steps.uuid.outputs.uuid }}-core2.out"
+
+          echo "Running core-group3 suite"
+          ./mvnw \
+            -DargLine="-Xmx512m -XX:+UseSerialGC -Xss256k -XX:MaxMetaspaceSize=128m -Dio.netty.maxDirectMemory=64m -XX:MaxDirectMemorySize=64m -XX:ReservedCodeCacheSize=64m -XX:CICompilerCount=2 -Dorg.apache.flink.shaded.netty4.io.netty.handler.ssl.noOpenSsl=true -Dio.netty.handler.ssl.noOpenSsl=true -Djdk.tls.disabledAlgorithms= -Djdk.certpath.disabledAlgorithms=" \
+            -Dsurefire.forkCount=1 -DreuseForks=false \
+            -Dflink.tests.check-segment-multiple-free -Darchunit.freeze.store.default.allowStoreUpdate=false -Dinclude_hadoop_aws -Djdk17 -Pjava17-target -Pgithub-actions -Drat.skip=true \
+            -pl flink-metrics,flink-metrics/flink-metrics-core,flink-external-resources,flink-external-resources/flink-external-resource-gpu,flink-libraries,flink-libraries/flink-cep,flink-libraries/flink-state-processing-api,flink-queryable-state,flink-queryable-state/flink-queryable-state-runtime,flink-queryable-state/flink-queryable-state-client-java,flink-container,flink-dstl,flink-dstl/flink-dstl-dfs \
+            -fn verify > "logs/logs-${{ matrix.branch }}-${{ steps.uuid.outputs.uuid }}-core3.out"
+
+          echo "Running table suite"
+          ./mvnw \
+            -DargLine="-Xmx512m -XX:+UseSerialGC -Xss256k -XX:MaxMetaspaceSize=128m -Dio.netty.maxDirectMemory=64m -XX:MaxDirectMemorySize=64m -XX:ReservedCodeCacheSize=64m -XX:CICompilerCount=2 -Dorg.apache.flink.shaded.netty4.io.netty.handler.ssl.noOpenSsl=true -Dio.netty.handler.ssl.noOpenSsl=true -Djdk.tls.disabledAlgorithms= -Djdk.certpath.disabledAlgorithms=" \
+            -Dsurefire.forkCount=1 -DreuseForks=false \
+            -Dflink.tests.check-segment-multiple-free -Darchunit.freeze.store.default.allowStoreUpdate=false -Dinclude_hadoop_aws -Djdk17 -Pjava17-target -Pgithub-actions -Drat.skip=true \
+            -pl flink-table,flink-table/flink-sql-parser,flink-table/flink-table-common,flink-table/flink-table-api-java,flink-table/flink-table-api-scala,flink-table/flink-table-api-bridge-base,flink-table/flink-table-api-java-bridge,flink-table/flink-table-api-scala-bridge,flink-table/flink-table-api-java-uber,flink-table/flink-sql-client,flink-table/flink-sql-gateway-api,flink-table/flink-sql-gateway,flink-table/flink-table-planner,flink-table/flink-table-planner-loader,flink-table/flink-table-planner-loader-bundle,flink-table/flink-table-runtime,flink-table/flink-table-code-splitter,flink-table/flink-table-test-utils \
+            -fn verify > "logs/logs-${{ matrix.branch }}-${{ steps.uuid.outputs.uuid }}-table.out"
+
+          echo "Running connect suite"
+          ./mvnw \
+            -DargLine="-Xmx512m -XX:+UseSerialGC -Xss256k -XX:MaxMetaspaceSize=128m -Dio.netty.maxDirectMemory=64m -XX:MaxDirectMemorySize=64m -XX:ReservedCodeCacheSize=64m -XX:CICompilerCount=2 -Dorg.apache.flink.shaded.netty4.io.netty.handler.ssl.noOpenSsl=true -Dio.netty.handler.ssl.noOpenSsl=true -Djdk.tls.disabledAlgorithms= -Djdk.certpath.disabledAlgorithms=" \
+            -Dsurefire.forkCount=1 -DreuseForks=false \
+            -Dflink.tests.check-segment-multiple-free -Darchunit.freeze.store.default.allowStoreUpdate=false -Dinclude_hadoop_aws -Djdk17 -Pjava17-target -Pgithub-actions -Drat.skip=true \
+            -pl flink-filesystems,flink-filesystems/flink-azure-fs-hadoop,flink-filesystems/flink-fs-hadoop-shaded,flink-filesystems/flink-gs-fs-hadoop,flink-filesystems/flink-hadoop-fs,flink-filesystems/flink-oss-fs-hadoop,flink-filesystems/flink-s3-fs-base,flink-filesystems/flink-s3-fs-hadoop,flink-filesystems/flink-s3-fs-presto,flink-fs-tests,flink-formats,flink-formats/flink-format-common,flink-formats/flink-avro-confluent-registry,flink-formats/flink-sql-avro-confluent-registry,flink-formats/flink-avro,flink-formats/flink-sql-avro,flink-formats/flink-compress,flink-formats/flink-hadoop-bulk,flink-formats/flink-parquet,flink-formats/flink-sql-parquet,flink-formats/flink-sequence-file,flink-formats/flink-json,flink-formats/flink-csv,flink-formats/flink-orc,flink-formats/flink-sql-orc,flink-formats/flink-orc-nohive,flink-connectors/flink-file-sink-common,flink-connectors/flink-hadoop-compatibility,flink-connectors,flink-connectors/flink-connector-files,flink-metrics/flink-metrics-dropwizard,flink-metrics/flink-metrics-graphite,flink-metrics/flink-metrics-jmx,flink-metrics/flink-metrics-influxdb,flink-metrics/flink-metrics-prometheus,flink-metrics/flink-metrics-statsd,flink-metrics/flink-metrics-datadog,flink-metrics/flink-metrics-slf4j,flink-metrics/flink-metrics-otel,flink-connectors/flink-connector-base,flink-models/flink-model-openai,flink-models/flink-model-triton \
+            -fn verify > "logs/logs-${{ matrix.branch }}-${{ steps.uuid.outputs.uuid }}-connect.out"
+
+          echo "End of the tests, displaying logs"
+          cat logs/*.out
+          echo "Creating archive of tests logs"
+          zip -r logs-${{ matrix.branch }}-${{ steps.uuid.outputs.uuid }}.zip logs
+
+      - name: Upload locally built artifact
+        uses: actions/upload-artifact@v7
+        continue-on-error: true
+        with:
+          name: integration-test-logs-${{ matrix.branch }}-${{ steps.uuid.outputs.uuid }}
+          path: charmed-flink/logs-${{ matrix.branch }}-${{ steps.uuid.outputs.uuid }}.zip
+
+  validation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    needs:
+      test_flink
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Checkout results
+        uses: actions/download-artifact@v8
+        with:
+          path: results/
+          pattern: integration-test-logs-*
+          merge-multiple: true
+      - name: Install python dependencies
+        run: |
+          pip install -r requirements.txt
+      - name: Print results
+        run: |
+          python3 -m ie-tests.validate_hadoop_flink -a "results/"
+          echo "Analyis finished"
+      - name: Compress logs
+        run: |
+          zip -r all-results.zip results
+          echo "END"
+      - name: Upload all tests logs
+        uses: actions/upload-artifact@v7
+        with:
+          name: integration-test-logs-uuid
+          path: all-results.zip
