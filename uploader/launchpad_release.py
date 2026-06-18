@@ -5,6 +5,7 @@
 
 import logging
 import os
+import shutil
 import sys
 from argparse import ArgumentParser, Namespace
 from datetime import datetime
@@ -123,7 +124,8 @@ def get_tarball_files(
         files = list(Path.cwd().glob(f"{tarball_path.name}*"))
         logger.debug(f"Number of files: {len(files)}")
     else:
-        files.append(tarball_path)
+        shutil.copy(tarball_path.absolute(), "./")
+        files.append(Path(f"./{tarball_path.name}"))
 
     return files
 
