@@ -124,7 +124,7 @@ def get_tarball_files(
         files = list(Path.cwd().glob(f"{tarball_path.name}*"))
         logger.debug(f"Number of files: {len(files)}")
     else:
-        shutil.move(tarball_path.absolute(), "./")
+        shutil.copy(tarball_path.absolute(), "./")
         files.append(Path(f"./{tarball_path.name}"))
 
     return files
