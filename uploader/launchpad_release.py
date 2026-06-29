@@ -119,7 +119,7 @@ def get_tarball_files(
     files = []
     if file_size > 500_000_000:
         logger.debug("Split on multiple files...")
-        command = f"tar cvzf - {tarball_path} | split -b 200m - {tarball_path.name}."
+        command = f"split -b 200m {tarball_path} {tarball_path.name}."
         os.system(command)
         files = list(Path.cwd().glob(f"{tarball_path.name}*"))
         logger.debug(f"Number of files: {len(files)}")
