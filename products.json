@@ -153,5 +153,19 @@
     "artifactory-user": "ARTIFACTORY_USER",
     "artifactory-token": "ARTIFACTORY_TOKEN",
     "tarball-regex": "flink-*.tgz"
+  },
+  {
+    "name": "polaris",
+    "lp-building-project": "soss",
+    "lp-releasing-project": "polaris-releases",
+    "lp-building-repo": "~data-platform/soss/+source/charmed-polaris/+git/charmed-polaris/",
+    "lp-building-branch-prefix": "lp-1",
+    "lp-consumer-key": "LP_CONSUMER_KEY",
+    "lp-access-token": "LP_ACCESS_TOKEN",
+    "lp-access-secret": "LP_SECRET_TOKEN",
+    "artifactory-url": "https://canonical.jfrog.io/artifactory/dataplatform-maven-local/",
+    "artifactory-user": "ARTIFACTORY_USER",
+    "artifactory-token": "ARTIFACTORY_TOKEN",
+    "tarball-regex": "polaris-*.tgz"
   }
 ]
