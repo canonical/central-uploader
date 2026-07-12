@@ -50,6 +50,9 @@ def create_services_parser(parser: ArgumentParser) -> ArgumentParser:
     parser_tag_multiarch.add_argument(
         "--series", type=str, help="The ubuntu series of that file."
     )
+    parser_tag_multiarch.add_argument(
+        "--architecture", type=str, help="The architecture of that file."
+    )
 
     parser_validation = subparser.add_parser(Actions.VALID_NAME.value)
     parser_validation.add_argument(
