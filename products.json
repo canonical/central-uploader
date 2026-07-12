@@ -112,6 +112,38 @@
     "tarball-regex": "zookeeper*.tgz"
   },
   {
+    "name": "opensearch-3-arm64",
+    "lp-building-project": "soss",
+    "lp-releasing-project": "opensearch-releases",
+    "lp-building-repo": "~data-platform/soss/+source/opensearch-build/+git/opensearch-build/",
+    "lp-building-branch-prefix": "lp-3",
+    "lp-release-track-name": "3.x-arm64",
+    "lp-consumer-key": "LP_CONSUMER_KEY",
+    "lp-access-token": "LP_ACCESS_TOKEN",
+    "lp-access-secret": "LP_SECRET_TOKEN",
+    "artifactory-url": "https://canonical.jfrog.io/artifactory/dataplatform-opensearch-maven-local/",
+    "artifactory-user": "ARTIFACTORY_USER",
+    "artifactory-token": "ARTIFACTORY_TOKEN",
+    "tarball-regex": "opensearch-*-arm64.tar.gz",
+    "check-all-runs": true
+  },
+  {
+    "name": "opensearch-3-amd64",
+    "lp-building-project": "soss",
+    "lp-releasing-project": "opensearch-releases",
+    "lp-building-repo": "~data-platform/soss/+source/opensearch-build/+git/opensearch-build/",
+    "lp-building-branch-prefix": "lp-3",
+    "lp-release-track-name": "3.x-amd64",
+    "lp-consumer-key": "LP_CONSUMER_KEY",
+    "lp-access-token": "LP_ACCESS_TOKEN",
+    "lp-access-secret": "LP_SECRET_TOKEN",
+    "artifactory-url": "https://canonical.jfrog.io/artifactory/dataplatform-opensearch-maven-local/",
+    "artifactory-user": "ARTIFACTORY_USER",
+    "artifactory-token": "ARTIFACTORY_TOKEN",
+    "tarball-regex": "opensearch-*-amd64.tar.gz",
+    "check-all-runs": true
+  },
+  {
     "name": "opensearch",
     "lp-building-project": "soss",
     "lp-releasing-project": "opensearch-releases",

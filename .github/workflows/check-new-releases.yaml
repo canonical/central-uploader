@@ -58,7 +58,12 @@ on:
       library-regex:
         required: true
         type: string
-        description: The regular expression to extract name of the tarball.
+        description: The regular expression to extract name of the tarball. 
+      check-all-runs:
+        required: false
+        type: boolean
+        default: false
+        description: The number of runs to look into.
 
 permissions:
   contents: read
@@ -85,6 +90,7 @@ jobs:
           echo "lp-building-branch-prefix: ${{ inputs.lp-building-branch-prefix }}"
           echo "tarball-regex: ${{ inputs.tarball-regex }}"
           echo "library-regex: ${{ inputs.library-regex }}"
+          echo "check-all-runs: ${{ inputs.check-all-runs }}"
 
       - name: Create credentials file for Launchpad
         env:
@@ -113,7 +119,8 @@ jobs:
             --branch-prefix ${{ inputs.lp-building-branch-prefix }} \
             --credential-file ${{ env.LP_CREDENTIALS }} \
             --output-folder ${{ env.OUTPUT_DIR }} \
-            --tarball-pattern ${{ inputs.tarball-regex }}
+            --tarball-pattern ${{ inputs.tarball-regex }} \
+            --check-all-runs ${{ inputs.check-all-runs }}
 
       - name: Check if products needed to be released
         id: check-release
