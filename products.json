@@ -140,7 +140,7 @@
     "artifactory-url": "https://canonical.jfrog.io/artifactory/dataplatform-opensearch-maven-local/",
     "artifactory-user": "ARTIFACTORY_USER",
     "artifactory-token": "ARTIFACTORY_TOKEN",
-    "tarball-regex": "opensearch-*-amd64.tar.gz",
+    "tarball-regex": "opensearch-*-x64.tar.gz",
     "check-all-runs": true
   },
   {
