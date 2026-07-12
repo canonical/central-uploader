@@ -125,7 +125,8 @@
     "artifactory-user": "ARTIFACTORY_USER",
     "artifactory-token": "ARTIFACTORY_TOKEN",
     "tarball-regex": "opensearch-*-arm64.tar.gz",
-    "check-all-runs": true
+    "check-all-runs": true,
+    "architecture": "arm64"
   },
   {
     "name": "opensearch-3-amd64",
@@ -141,7 +142,8 @@
     "artifactory-user": "ARTIFACTORY_USER",
     "artifactory-token": "ARTIFACTORY_TOKEN",
     "tarball-regex": "opensearch-*-x64.tar.gz",
-    "check-all-runs": true
+    "check-all-runs": true,
+    "architecture": "amd64"
   },
   {
     "name": "opensearch",

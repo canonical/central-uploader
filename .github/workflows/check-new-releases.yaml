@@ -64,6 +64,11 @@ on:
         type: boolean
         default: false
         description: The number of runs to look into.
+      architecture:
+        required: false
+        default: ""
+        type: string
+        description: Architecture of that file 
 
 permissions:
   contents: read
@@ -91,6 +96,7 @@ jobs:
           echo "tarball-regex: ${{ inputs.tarball-regex }}"
           echo "library-regex: ${{ inputs.library-regex }}"
           echo "check-all-runs: ${{ inputs.check-all-runs }}"
+          echo "architecture: ${{ inputs.architecture }}"
 
       - name: Create credentials file for Launchpad
         env:
@@ -205,12 +211,20 @@ jobs:
           echo "TARBALL_FILENAME=$tarball_filename" >> $GITHUB_OUTPUT
           cd ../../
           ls
-          version=$( python3 -m uploader.services get-version -n $tarball_filename )
-          lp_version=$(echo $version | grep -oP '(?<=-)\d[\d.]*.*')
-          if [[ -z "${{ inputs.lp-release-track-name }}" ]]; then
-              track=$(echo "${{ inputs.lp-building-branch-prefix }}" | awk -F '-' '{print $NF}')
+          # If the architecture is specified use it
+          if [[ "${{ inputs.architecture }}" != "" ]]; then
+              echo "Architecture is specified: ${{ inputs.architecture }}"
+              version=$( python3 -m uploader.services get-version-multiarch -n $tarball_filename --architecture ${{ inputs.architecture }})
+              lp_version=$(echo $version | cut -d'-' -f2-)
+              track="${{ inputs.lp-release-track-name }}"
           else
-              track=$(echo "${{ inputs.lp-release-track-name }}" | awk -F '-' '{print $NF}')
+              version=$( python3 -m uploader.services get-version -n $tarball_filename )
+              lp_version=$(echo $version | grep -oP '(?<=-)\d[\d.]*.*')
+              if [[ -z "${{ inputs.lp-release-track-name }}" ]]; then
+                  track=$(echo "${{ inputs.lp-building-branch-prefix }}" | awk -F '-' '{print $NF}')
+              else
+                  track=$(echo "${{ inputs.lp-release-track-name }}" | awk -F '-' '{print $NF}')
+              fi
           fi
 
           echo "VERSION=$version" >> $GITHUB_OUTPUT

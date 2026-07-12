@@ -56,3 +56,4 @@ jobs:
       tarball-regex: ${{ matrix.product.tarball-regex }}
       library-regex: ${{ matrix.product.library-regex }}
       check-all-runs: ${{ matrix.product.check-all-runs }}
+      architecture: ${{ matrix.product.architecture }}
