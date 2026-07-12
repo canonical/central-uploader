@@ -136,6 +136,7 @@ jobs:
             --output-directory ${{ env.OUTPUT_DIR }} \
             --tarball-pattern ${{ inputs.tarball-regex }} \
             --repository-owner canonical --project-name ${{ github.event.repository.name }}
+            --architecture ${{ inputs.architecture }}
 
           cd ${{ env.OUTPUT_DIR }};
           number_of_releases=$( ls . | wc -l )
@@ -156,7 +157,7 @@ jobs:
         if: ${{ steps.check-release.outputs.release-package == 'true' }}
         uses: actions/upload-artifact@v7
         with:
-          name: releases-${{ inputs.name }}-${{ inputs.lp-building-branch-prefix }}
+          name: releases-${{ inputs.name }}-${{ inputs.lp-building-branch-prefix }}-${{ inputs.architecture }}
           path: ${{ env.OUTPUT_DIR }}-${{ inputs.name }}.zip
 
       - name: Generate matrix with all built versions
@@ -187,7 +188,7 @@ jobs:
       - name: Download releases
         uses: actions/download-artifact@v8
         with:
-          name: releases-${{ inputs.name }}-${{ inputs.lp-building-branch-prefix }}
+          name: releases-${{ inputs.name }}-${{ inputs.lp-building-branch-prefix }}-${{ inputs.architecture }}
 
       - name: Install Python dependencies
         run: pip install -r requirements.txt
