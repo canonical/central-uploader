@@ -286,6 +286,19 @@ def get_version_from_tarball_name(
         items = p.split(tarball_name)
         item = items[0]
 
+        # Preserve logic if no series and architecture are provided
+        if not series and not architecture:
+            return item
+        
+        parts = item.rsplit("-", 1)
+        if len(parts) == 2:
+            base, distro = parts
+            if series:
+                base = f"{base}-{series}"
+            if architecture:
+                base = f"{base}-{architecture}"
+            return f"{base}-{distro}"
+            
         if series:
             item = f"{item}-{series}"
 
