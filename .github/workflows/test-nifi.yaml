@@ -79,7 +79,9 @@ jobs:
         env:
           USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
           PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
-          ARTIFACTORY_URL: ${{ secrets.NIFI_ARTIFACTORY_URL }}
+          # Before merge: delete the hardcoded line below and uncomment this one.
+          # ARTIFACTORY_URL: ${{ secrets.NIFI_ARTIFACTORY_URL }}
+          ARTIFACTORY_URL: "https://canonical.jfrog.io/artifactory/dataplatform-nifi-staging/"
           CORE_MODULES: "nifi-commons/nifi-utils,nifi-commons/nifi-record,nifi-commons/nifi-expression-language,nifi-commons/nifi-record-path,nifi-framework-bundle/nifi-framework/nifi-framework-core"
         run: |
           echo "Java:"; java -version
@@ -98,10 +100,10 @@ jobs:
           mkdir -p logs
 
           echo "### Building core modules (-DskipTests) ###"
-          ./mvnw -B -T1C -DskipTests -Drat.skip=true -pl "${CORE_MODULES}" -am install
+          ./mvnw -B -T1C -U -DskipTests -Drat.skip=true -pl "${CORE_MODULES}" -am install
 
           echo "### Running Layer 1 unit tests ###"
-          ./mvnw -B test -fn -pl "${CORE_MODULES}" 2>&1 | tee "logs/logs-${{ steps.uuid.outputs.uuid }}.out"
+          ./mvnw -B -U test -fn -pl "${CORE_MODULES}" 2>&1 | tee "logs/logs-${{ steps.uuid.outputs.uuid }}.out"
 
           zip -r "ie-tests/logs-${{ steps.uuid.outputs.uuid }}.zip" logs
 
