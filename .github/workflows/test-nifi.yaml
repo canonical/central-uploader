@@ -83,114 +83,43 @@ jobs:
           # ARTIFACTORY_URL: ${{ secrets.NIFI_ARTIFACTORY_URL }}
           ARTIFACTORY_URL: "https://canonical.jfrog.io/artifactory/dataplatform-nifi-staging/"
           CORE_MODULES: "nifi-commons/nifi-utils,nifi-commons/nifi-record,nifi-commons/nifi-expression-language,nifi-commons/nifi-record-path,nifi-commons/nifi-security-crypto-key,nifi-commons/nifi-property-encryptor,nifi-commons/nifi-security-cert,nifi-commons/nifi-security-ssl,nifi-framework-bundle/nifi-framework/nifi-framework-core"
-        run: |
-          echo "Java:"; java -version
-          cd charmed-nifi
-
-          branch=${{ matrix.branch }}
-          [ -z "$branch" ] && branch="release-2.10.0-ubuntu0"
-          echo "Branch to test: $branch"
-          git checkout "$branch"
-          ./mvnw -version
-
-          echo "ie-tests/*" >> .rat-excludes
-          echo "**/ie-tests/*" >> .rat-excludes
-          echo "lp/*" >> .rat-excludes
-
-          mkdir -p logs
-
-          echo "### Building core modules (-DskipTests) ###"
-          ./mvnw -B -T1C -U -DskipTests -Drat.skip=true -pl "${CORE_MODULES}" -am install
-
-          echo "### Running Layer 1 unit tests ###"
-          ./mvnw -B -U test -fn -pl "${CORE_MODULES}" 2>&1 | tee "logs/logs-${{ steps.uuid.outputs.uuid }}.out"
-
-          zip -r "ie-tests/logs-${{ steps.uuid.outputs.uuid }}.zip" logs
-
-      - name: Upload locally built artifact
-        uses: actions/upload-artifact@v4
-        continue-on-error: true
-        with:
-          name: integration-test-logs-${{ steps.uuid.outputs.uuid }}
-          path: charmed-nifi/ie-tests/logs-${{ steps.uuid.outputs.uuid }}.zip
-
-  # Layer 2 — single-node system/integration smoke: builds NiFi and boots real instances
-  # to run flows (maven-failsafe *IT). Separate job so its weight/flakiness can't mask
-  # Layer 1. Curated single-node set only — clustering/stateless/python ITs are excluded
-  # (the rock is single-node, so those are zero-signal and the flakiest part of the suite).
-  system_tests:
-    needs: prepare_matrix
-    runs-on: ["self-hosted-linux-amd64-jammy-xlarge"]
-    timeout-minutes: 1440
-    strategy:
-      fail-fast: false
-      matrix:
-        branch: ${{fromJson(needs.prepare_matrix.outputs.matrix)}}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "21"
-      - name: Install dependencies
-        run: |
-          sudo snap install yq
-          sudo apt-get update
-          sudo apt-get -y install zip
-      - name: ssh agent
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_KEY }}
-      - name: Clone repo
-        run: |
-          ssh-keyscan -t rsa git.launchpad.net >> ~/.ssh/known_hosts
-          git clone --progress --verbose ${{ secrets.REPO_NIFI_URL }}
-          cp -r ie-tests charmed-nifi
-      - name: Generate uuid
-        id: uuid
-        timeout-minutes: 5
-        run: echo "uuid=$(uuidgen)" >> $GITHUB_OUTPUT
-      - name: Setup maven credential
-        run: |
-          mkdir -p ~/.m2
-          mv ie-tests/settings.xml ~/.m2/settings.xml
-      - name: Run system tests
-        timeout-minutes: 600
-        env:
-          USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
-          PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
-          # TEMP staging URL (same as Layer 1) — revert to secrets.NIFI_ARTIFACTORY_URL before merge.
-          ARTIFACTORY_URL: "https://canonical.jfrog.io/artifactory/dataplatform-nifi-staging/"
           SUITE: "nifi-system-tests/nifi-system-test-suite"
-          # Absolute-necessary single-node smoke: boot NiFi + run basic processor flows.
-          # Widen as it stabilises; keep clustering/stateless/python OUT.
+          # single-node smoke do not keep clustering/stateless/python
           IT_TESTS: "RunOnceIT,RetryIT,ProcessorDynamicPropertiesIT,VerifiableProcessorSystemIT"
         run: |
           echo "Java:"; java -version
           cd charmed-nifi
+
           branch=${{ matrix.branch }}
           [ -z "$branch" ] && branch="release-2.10.0-ubuntu0"
           echo "Branch to test: $branch"
           git checkout "$branch"
           ./mvnw -version
+
           echo "ie-tests/*" >> .rat-excludes
           echo "**/ie-tests/*" >> .rat-excludes
           echo "lp/*" >> .rat-excludes
+
           mkdir -p logs
 
-          echo "### Building the system-test-suite + its NiFi deps (-DskipTests) ###"
-          ./mvnw -B -T1C -U -DskipTests -Drat.skip=true -pl "${SUITE}" -am install
+          # Build core modules + the system-test suite ONCE (no tests) — one clone, one build,
+          # reused by both layers (flink's build-once-then-test-groups pattern).
+          echo "### Building core + system-test suite (-DskipTests) ###"
+          ./mvnw -B -T1C -U -DskipTests -Drat.skip=true -pl "${CORE_MODULES},${SUITE}" -am install
 
-          echo "### Running Layer 2 single-node integration smoke ###"
-          # failsafe *IT tests; -fn so the validator sees all results; JVM capped for the forks.
+          # Layer 1 — unit tests on core modules.
+          echo "### Layer 1: core unit tests ###"
+          ./mvnw -B -U test -fn -pl "${CORE_MODULES}" 2>&1 | tee "logs/logs-${{ steps.uuid.outputs.uuid }}-layer1.out"
+
+          # Layer 2 — single-node system integration smoke (boots real NiFi). Best-effort:
+          # '|| true' keeps a Layer 2 build/staging failure from dropping Layer 1's results.
+          echo "### Layer 2: single-node system integration smoke ###"
           ./mvnw -B -U -fn verify -pl "${SUITE}" \
-            -Dit.test="${IT_TESTS}" -DfailIfNoTests=false \
-            -DargLine="-Xmx2g" \
-            2>&1 | tee "logs/logs-${{ steps.uuid.outputs.uuid }}-systest.out"
+            -Dit.test="${IT_TESTS}" -DfailIfNoTests=false -DargLine="-Xmx2g" \
+            2>&1 | tee "logs/logs-${{ steps.uuid.outputs.uuid }}-layer2.out" || true
 
           zip -r "ie-tests/logs-${{ steps.uuid.outputs.uuid }}.zip" logs
+
       - name: Upload locally built artifact
         uses: actions/upload-artifact@v4
         continue-on-error: true
@@ -201,7 +130,7 @@ jobs:
   validation:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
-    needs: [test_nifi, system_tests]
+    needs: test_nifi
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
