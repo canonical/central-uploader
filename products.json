@@ -167,5 +167,19 @@
     "artifactory-user": "ARTIFACTORY_USER",
     "artifactory-token": "ARTIFACTORY_TOKEN",
     "tarball-regex": "polaris-*.tgz"
+  },
+  {
+    "name": "nifi",
+    "lp-building-project": "soss",
+    "lp-releasing-project": "nifi-releases",
+    "lp-building-repo": "~workflows-charmers/soss/+source/charmed-nifi/+git/charmed-nifi/",
+    "lp-building-branch-prefix": "lp-2",
+    "lp-consumer-key": "LP_CONSUMER_KEY",
+    "lp-access-token": "LP_ACCESS_TOKEN",
+    "lp-access-secret": "LP_SECRET_TOKEN",
+    "artifactory-url": "https://canonical.jfrog.io/artifactory/dataplatform-nifi-stable-local/",
+    "artifactory-user": "ARTIFACTORY_USER",
+    "artifactory-token": "ARTIFACTORY_TOKEN",
+    "tarball-regex": "nifi-*-bin.tar.gz"
   }
 ]
