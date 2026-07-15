@@ -102,19 +102,15 @@ jobs:
 
           mkdir -p logs
 
-          # Build core modules + the system-test suite ONCE (no tests) — one clone, one build,
-          # reused by both layers (flink's build-once-then-test-groups pattern).
           echo "### Building core + system-test suite (-DskipTests) ###"
           ./mvnw -B -T1C -U -DskipTests -Drat.skip=true -pl "${CORE_MODULES},${SUITE}" -am install
 
-          # Layer 1 — unit tests on core modules.
           echo "### Layer 1: core unit tests ###"
           ./mvnw -B -U test -fn -pl "${CORE_MODULES}" 2>&1 | tee "logs/logs-${{ steps.uuid.outputs.uuid }}-layer1.out"
 
-          # Layer 2 — single-node system integration smoke (boots real NiFi). Best-effort:
-          # '|| true' keeps a Layer 2 build/staging failure from dropping Layer 1's results.
           echo "### Layer 2: single-node system integration smoke ###"
           ./mvnw -B -U -fn verify -pl "${SUITE}" \
+            -Pintegration-tests -Pskip-unit-tests \
             -Dit.test="${IT_TESTS}" -DfailIfNoTests=false -DargLine="-Xmx2g" \
             2>&1 | tee "logs/logs-${{ steps.uuid.outputs.uuid }}-layer2.out" || true
 
