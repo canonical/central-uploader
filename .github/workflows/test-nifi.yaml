@@ -8,7 +8,6 @@ on:
         description: "Comma-separated list of branches to test"
         required: true
         default: "lp-2.10.0"
-  pull_request:
 
 permissions:
   contents: read
