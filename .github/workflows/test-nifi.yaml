@@ -7,7 +7,7 @@ on:
       branches:
         description: "Comma-separated list of branches to test"
         required: true
-        default: "release-2.10.0-ubuntu0"
+        default: "lp-2.10.0"
   pull_request:
 
 permissions:
@@ -20,7 +20,7 @@ jobs:
     steps:
       - id: setup_matrix
         run: |
-          input="${{ inputs.branches || 'release-2.10.0-ubuntu0' }}"
+          input="${{ inputs.branches || 'lp-2.10.0' }}"
           echo "matrix=[\"${input//,/\",\"}\"]" >> $GITHUB_OUTPUT
           echo "[\"${input//,/\",\"}\"]"
     outputs:
@@ -46,7 +46,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo snap install yq
           sudo apt-get update
           sudo apt-get -y install zip
 
@@ -79,9 +78,7 @@ jobs:
         env:
           USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
           PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
-          # Before merge: delete the hardcoded line below and uncomment this one.
-          # ARTIFACTORY_URL: ${{ secrets.NIFI_ARTIFACTORY_URL }}
-          ARTIFACTORY_URL: "https://canonical.jfrog.io/artifactory/dataplatform-nifi-staging/"
+          ARTIFACTORY_URL: ${{ secrets.NIFI_ARTIFACTORY_URL }}
           CORE_MODULES: "nifi-commons/nifi-utils,nifi-commons/nifi-record,nifi-commons/nifi-expression-language,nifi-commons/nifi-record-path,nifi-commons/nifi-security-crypto-key,nifi-commons/nifi-property-encryptor,nifi-commons/nifi-security-cert,nifi-commons/nifi-security-ssl,nifi-framework-bundle/nifi-framework/nifi-framework-core"
           SUITE: "nifi-system-tests/nifi-system-test-suite"
           # single-node smoke do not keep clustering/stateless/python
@@ -91,7 +88,7 @@ jobs:
           cd charmed-nifi
 
           branch=${{ matrix.branch }}
-          [ -z "$branch" ] && branch="release-2.10.0-ubuntu0"
+          [ -z "$branch" ] && branch="lp-2.10.0"
           echo "Branch to test: $branch"
           git checkout "$branch"
           ./mvnw -version
