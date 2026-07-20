@@ -1,0 +1,149 @@
+name: Run NiFi integration tests
+
+on:
+  workflow_call:
+  workflow_dispatch:
+    inputs:
+      branches:
+        description: "Comma-separated list of branches to test"
+        required: true
+        default: "lp-2.10.0"
+
+permissions:
+  contents: read
+
+jobs:
+  prepare_matrix:
+    name: Prepare matrix
+    runs-on: ubuntu-24.04
+    steps:
+      - id: setup_matrix
+        run: |
+          input="${{ inputs.branches || 'lp-2.10.0' }}"
+          echo "matrix=[\"${input//,/\",\"}\"]" >> $GITHUB_OUTPUT
+          echo "[\"${input//,/\",\"}\"]"
+    outputs:
+      matrix: ${{ steps.setup_matrix.outputs.matrix }}
+
+  test_nifi:
+    needs: prepare_matrix
+    runs-on: ["self-hosted-linux-amd64-jammy-xlarge"]
+    timeout-minutes: 1440
+    strategy:
+      fail-fast: false
+      matrix:
+        branch: ${{fromJson(needs.prepare_matrix.outputs.matrix)}}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install zip
+
+      - name: ssh agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
+
+      - name: Clone repo
+        run: |
+          ssh-keyscan -t rsa git.launchpad.net >> ~/.ssh/known_hosts
+          echo "cloning..."
+          git clone --progress --verbose ${{ secrets.REPO_NIFI_URL }}
+          echo "cloned!"
+          cp -r ie-tests charmed-nifi
+
+      - name: Generate uuid
+        id: uuid
+        timeout-minutes: 5
+        run: echo "uuid=$(uuidgen)" >> $GITHUB_OUTPUT
+
+      - name: Setup maven credential
+        run: |
+          echo "Setup custom settings.xml"
+          mkdir -p ~/.m2
+          mv ie-tests/settings.xml ~/.m2/settings.xml
+
+      - name: Run tests
+        timeout-minutes: 600
+        env:
+          USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+          PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+          ARTIFACTORY_URL: ${{ secrets.NIFI_ARTIFACTORY_URL }}
+          CORE_MODULES: "nifi-commons/nifi-utils,nifi-commons/nifi-record,nifi-commons/nifi-expression-language,nifi-commons/nifi-record-path,nifi-commons/nifi-security-crypto-key,nifi-commons/nifi-property-encryptor,nifi-commons/nifi-security-cert,nifi-commons/nifi-security-ssl,nifi-framework-bundle/nifi-framework/nifi-framework-core"
+          SUITE: "nifi-system-tests/nifi-system-test-suite"
+          # single-node smoke do not keep clustering/stateless/python
+          IT_TESTS: "RunOnceIT,RetryIT,ProcessorDynamicPropertiesIT,VerifiableProcessorSystemIT"
+        run: |
+          echo "Java:"; java -version
+          cd charmed-nifi
+
+          branch=${{ matrix.branch }}
+          [ -z "$branch" ] && branch="lp-2.10.0"
+          echo "Branch to test: $branch"
+          git checkout "$branch"
+          ./mvnw -version
+
+          echo "ie-tests/*" >> .rat-excludes
+          echo "**/ie-tests/*" >> .rat-excludes
+          echo "lp/*" >> .rat-excludes
+
+          mkdir -p logs
+
+          echo "### Building core + system-test suite (-DskipTests) ###"
+          ./mvnw -B -T1C -U -DskipTests -Drat.skip=true -pl "${CORE_MODULES},${SUITE}" -am install
+
+          echo "### Layer 1: core unit tests ###"
+          ./mvnw -B -U test -fn -pl "${CORE_MODULES}" 2>&1 | tee "logs/logs-${{ steps.uuid.outputs.uuid }}-layer1.out"
+
+          echo "### Layer 2: single-node system integration smoke ###"
+          ./mvnw -B -U -fn verify -pl "${SUITE}" \
+            -Pintegration-tests -Pskip-unit-tests \
+            -Dit.test="${IT_TESTS}" -DfailIfNoTests=false -DargLine="-Xmx2g" \
+            2>&1 | tee "logs/logs-${{ steps.uuid.outputs.uuid }}-layer2.out" || true
+
+          zip -r "ie-tests/logs-${{ steps.uuid.outputs.uuid }}.zip" logs
+
+      - name: Upload locally built artifact
+        uses: actions/upload-artifact@v7
+        continue-on-error: true
+        with:
+          name: integration-test-logs-${{ steps.uuid.outputs.uuid }}
+          path: charmed-nifi/ie-tests/logs-${{ steps.uuid.outputs.uuid }}.zip
+
+  validation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    needs: test_nifi
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+      - name: Checkout results
+        uses: actions/download-artifact@v8
+        with:
+          path: results/
+          pattern: integration-test-logs-*
+          merge-multiple: true
+      - name: Install python dependencies
+        run: pip install -r requirements.txt
+      - name: Print results
+        run: |
+          python3 -m ie-tests.validate_nifi -a "results/"
+          echo "Analysis finished"
+      - name: Compress logs
+        run: |
+          zip -r all-results.zip results
+          echo "END"
+      - name: Upload all tests logs
+        uses: actions/upload-artifact@v7
+        with:
+          name: integration-test-logs-uuid
+          path: all-results.zip
