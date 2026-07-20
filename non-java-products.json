@@ -58,5 +58,35 @@
         "check-all-runs": true,
         "architecture": "arm64",
         "series": "jammy"
+    },
+    {
+        "name": "mongodb",
+        "lp-building-project": "git",
+        "lp-releasing-project": "mongodb-releases",
+        "lp-building-repo": "~data-platform/soss/+source/mongodb-build/+git/mongodb-build/",
+        "lp-building-branch-prefix": "lp-8.0",
+        "lp-release-track-name": "8-noble-amd64",
+        "lp-consumer-key": "LP_CONSUMER_KEY",
+        "lp-access-token": "LP_ACCESS_TOKEN",
+        "lp-access-secret": "LP_SECRET_TOKEN",
+        "tarball-regex": "mongodb-*-amd64.tar.gz",
+        "check-all-runs": true,
+        "architecture": "amd64",
+        "series": "noble"
+    },
+    {
+        "name": "mongodb",
+        "lp-building-project": "git",
+        "lp-releasing-project": "mongodb-releases",
+        "lp-building-repo": "~data-platform/soss/+source/mongodb-build/+git/mongodb-build/",
+        "lp-building-branch-prefix": "lp-8.0",
+        "lp-release-track-name": "8-noble-arm64",
+        "lp-consumer-key": "LP_CONSUMER_KEY",
+        "lp-access-token": "LP_ACCESS_TOKEN",
+        "lp-access-secret": "LP_SECRET_TOKEN",
+        "tarball-regex": "mongodb-*-arm64.tar.gz",
+        "check-all-runs": true,
+        "architecture": "arm64",
+        "series": "noble"
     }
 ]
