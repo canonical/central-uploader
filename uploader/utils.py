@@ -62,12 +62,16 @@ def get_product_tags(
     product_name: str,
     product_version: str,
     series: str | None = None,
+    architecture: str | None = None,
 ):
     """Get the tags related to a product."""
     prefix = f"{product_name}-{product_version}"
 
     if series:
         prefix = f"{product_name}-{product_version}-.*-{series}"
+
+    if architecture:
+        prefix = f"{prefix}-.*-{architecture}"
 
     tags = get_repositories_tags(repository_owner, project_name)
     return [t for t in tags if re.match(prefix, t) and is_valid_release_version(t)]
@@ -125,6 +129,7 @@ def check_new_releases(
             product_name,
             product_version,
             series=series,
+            architecture=architecture,
         )
         logger.debug(f"Related tag: {related_tags}")
         # delete folder with release if already published
@@ -139,6 +144,7 @@ def check_new_releases(
             product_version,
             new_release_version,
             series=series,
+            architecture=architecture,
         )
 
     for folder in folders_to_delete:
@@ -195,10 +201,16 @@ def check_next_release_name(
     product_version: str,
     release_version: str,
     series: str | None = None,
+    architecture: str | None = None,
 ) -> bool:
     """Check that the new release name is valid."""
     related_tags = get_product_tags(
-        repository_owner, project_name, product_name, product_version, series=series
+        repository_owner,
+        project_name,
+        product_name,
+        product_version,
+        series=series,
+        architecture=architecture,
     )
     if not is_valid_release_version(release_version):
         raise ValueError(
@@ -285,6 +297,19 @@ def get_version_from_tarball_name(
         p = re.compile(TAG_PATTERN)
         items = p.split(tarball_name)
         item = items[0]
+
+        # Preserve logic if no series and architecture are provided
+        if not series and not architecture:
+            return item
+
+        parts = item.rsplit("-", 1)
+        if len(parts) == 2:
+            base, distro = parts
+            if series:
+                base = f"{base}-{series}"
+            if architecture:
+                base = f"{base}-{architecture}"
+            return f"{base}-{distro}"
 
         if series:
             item = f"{item}-{series}"
