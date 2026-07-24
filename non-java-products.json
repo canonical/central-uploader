@@ -101,7 +101,6 @@
         "lp-access-secret": "LP_SECRET_TOKEN",
         "tarball-regex": "opensearch-dashboards-*-arm64.tar.gz",
         "check-all-runs": true,
-        "series": "",
         "architecture": "arm64"
     },
     {
@@ -119,7 +118,6 @@
         "artifactory-token": "ARTIFACTORY_TOKEN",
         "tarball-regex": "opensearch-dashboards-*-x64.tar.gz",
         "check-all-runs": true,
-        "series": "",
         "architecture": "amd64"
     }
 ]
