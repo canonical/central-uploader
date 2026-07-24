@@ -203,7 +203,11 @@ jobs:
           echo "TARBALL_FILENAME=$tarball_filename" >> $GITHUB_OUTPUT
           cd ../../
           ls
-          version=$( python3 -m uploader.services get-version-multiarch -n $tarball_filename --series ${{ inputs.series }} --architecture ${{ inputs.architecture }})
+          if [ -z "${{ inputs.series }}" ]; then
+            version=$( python3 -m uploader.services get-version-multiarch -n $tarball_filename --architecture ${{ inputs.architecture }})
+          else
+            version=$( python3 -m uploader.services get-version-multiarch -n $tarball_filename --series ${{ inputs.series }} --architecture ${{ inputs.architecture }})
+          fi
           lp_version=$(echo $version | cut -d'-' -f2-)
           track="${{ inputs.lp-release-track-name }}"
 
