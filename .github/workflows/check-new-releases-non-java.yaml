@@ -114,19 +114,23 @@ jobs:
         run: |
           # if series not specified, set it to empty string
           if [ -z "${{ inputs.series }}" ]; then
-            echo "Series not specified, setting it to empty string"
-            series=""
+            python3 -m uploader.services \
+              check-releases \
+              --output-directory ${{ env.OUTPUT_DIR }} \
+              --tarball-pattern ${{ inputs.tarball-regex }} \
+              --repository-owner canonical \
+              --project-name ${{ github.event.repository.name }} \
+              --architecture ${{ inputs.architecture }}
           else
-            series="${{ inputs.series }}"
+            python3 -m uploader.services \
+              check-releases \
+              --output-directory ${{ env.OUTPUT_DIR }} \
+              --tarball-pattern ${{ inputs.tarball-regex }} \
+              --repository-owner canonical \
+              --project-name ${{ github.event.repository.name }} \
+              --series ${{ inputs.series }} \
+              --architecture ${{ inputs.architecture }}
           fi
-          python3 -m uploader.services \
-            check-releases \
-            --output-directory ${{ env.OUTPUT_DIR }} \
-            --tarball-pattern ${{ inputs.tarball-regex }} \
-            --repository-owner canonical \
-            --project-name ${{ github.event.repository.name }} \
-            --series $series \
-            --architecture ${{ inputs.architecture }}
           
           cd ${{ env.OUTPUT_DIR }};
           number_of_releases=$( ls . | wc -l )
