@@ -52,8 +52,7 @@ on:
         type: string
         description: Architecture of that file
       series:
-        required: false
-        default: ""
+        required: true
         type: string
         description: Ubuntu series of that file
 
@@ -113,13 +112,20 @@ jobs:
       - name: Check if products needed to be released
         id: check-release
         run: |
+          # if series not specified, set it to empty string
+          if [ -z "${{ inputs.series }}" ]; then
+            echo "Series not specified, setting it to empty string"
+            series=""
+          else
+            series="${{ inputs.series }}"
+          fi
           python3 -m uploader.services \
             check-releases \
             --output-directory ${{ env.OUTPUT_DIR }} \
             --tarball-pattern ${{ inputs.tarball-regex }} \
             --repository-owner canonical \
             --project-name ${{ github.event.repository.name }} \
-            --series ${{ inputs.series }} \
+            --series $series \
             --architecture ${{ inputs.architecture }}
           
           cd ${{ env.OUTPUT_DIR }};
