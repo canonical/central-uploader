@@ -9,6 +9,7 @@ on:
   schedule:
     - cron: "53 0 * * *" # Daily at 00:53 UTC
   workflow_call:
+  pull_request:
 
 permissions:
   contents: read
@@ -54,5 +55,5 @@ jobs:
       artifactory-token: ${{ matrix.product.artifactory-token }}
       tarball-regex: ${{ matrix.product.tarball-regex }}
       library-regex: ${{ matrix.product.library-regex }}
-      check-all-runs: ${{ matrix.product.check-all-runs }}
+      check-all-runs: ${{ matrix.product.check-all-runs || false }}
       architecture: ${{ matrix.product.architecture }}
