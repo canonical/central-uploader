@@ -58,7 +58,7 @@ on:
       library-regex:
         required: true
         type: string
-        description: The regular expression to extract name of the tarball. 
+        description: The regular expression to extract name of the tarball.
       check-all-runs:
         required: false
         type: boolean
@@ -68,7 +68,7 @@ on:
         required: false
         default: ""
         type: string
-        description: Architecture of that file 
+        description: Architecture of that file
 
 permissions:
   contents: read
@@ -130,13 +130,15 @@ jobs:
 
       - name: Check if products needed to be released
         id: check-release
+        env:
+          ARCH: ${{ inputs.architecture }}
         run: |
           python3 -m uploader.services \
             check-releases \
             --output-directory ${{ env.OUTPUT_DIR }} \
             --tarball-pattern ${{ inputs.tarball-regex }} \
             --repository-owner canonical --project-name ${{ github.event.repository.name }} \
-            --architecture ${{ inputs.architecture }}
+            ${ARCH:+"--architecture $ARCH"}
 
           cd ${{ env.OUTPUT_DIR }};
           number_of_releases=$( ls . | wc -l )
