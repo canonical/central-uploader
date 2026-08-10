@@ -121,5 +121,38 @@
         "check-all-runs": true,
         "series": "",
         "architecture": "amd64"
+    },
+    {
+        "name": "opensearch-dashboards",
+        "lp-building-project": "soss",
+        "lp-releasing-project": "opensearch-dashboards-releases",
+        "lp-building-repo": "~data-platform/soss/+source/opensearch-build/+git/opensearch-build/",
+        "lp-building-branch-prefix": "lp-dashboards-2",
+        "lp-release-track-name": "2.x",
+        "lp-consumer-key": "LP_CONSUMER_KEY",
+        "lp-access-token": "LP_ACCESS_TOKEN",
+        "lp-access-secret": "LP_SECRET_TOKEN",
+        "tarball-regex": "opensearch-dashboards-*-arm64.tar.gz",
+        "check-all-runs": true,
+        "series": "",
+        "architecture": "arm64"
+    },
+    {
+        "name": "opensearch-dashboards",
+        "lp-building-project": "soss",
+        "lp-releasing-project": "opensearch-dashboards-releases",
+        "lp-building-repo": "~data-platform/soss/+source/opensearch-build/+git/opensearch-build/",
+        "lp-building-branch-prefix": "lp-dashboards-2",
+        "lp-release-track-name": "2.x",
+        "lp-consumer-key": "LP_CONSUMER_KEY",
+        "lp-access-token": "LP_ACCESS_TOKEN",
+        "lp-access-secret": "LP_SECRET_TOKEN",
+        "artifactory-url": "https://canonical.jfrog.io/artifactory/dataplatform-opensearch-maven-local/",
+        "artifactory-user": "ARTIFACTORY_USER",
+        "artifactory-token": "ARTIFACTORY_TOKEN",
+        "tarball-regex": "opensearch-dashboards-*-x64.tar.gz",
+        "check-all-runs": true,
+        "series": "",
+        "architecture": "amd64"
     }
 ]
