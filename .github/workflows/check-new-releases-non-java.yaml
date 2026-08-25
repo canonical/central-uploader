@@ -67,7 +67,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
 
       - name: Print passed vars
         run: |
@@ -138,7 +138,7 @@ jobs:
 
       - name: Store builds
         if: ${{ steps.check-release.outputs.release-package == 'true' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: releases-${{ inputs.name }}-${{ inputs.lp-building-branch-prefix }}-${{ inputs.series }}-${{ inputs.architecture }}
           path: ${{ env.OUTPUT_DIR }}-${{ inputs.name }}.zip
@@ -163,10 +163,10 @@ jobs:
         version: ${{ fromJson(needs.download-builds.outputs.matrix) }}
     steps:      
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
 
       - name: Download releases
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: releases-${{ inputs.name }}-${{ inputs.lp-building-branch-prefix }}-${{ inputs.series}}-${{ inputs.architecture }}
 
@@ -240,7 +240,7 @@ jobs:
 
       - name: Release the package on Github
         id: create-new-release
-        uses: actions/create-release@v1
+        uses: actions/create-release@0cb9c9b65d5d1901c1f53e5e66eaf4afd303e70e # v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -248,7 +248,7 @@ jobs:
           tag_name: ${{ steps.get-tarball-name.outputs.VERSION }}
 
       - name: Upload tarball
-        uses: actions/upload-release-asset@v1
+        uses: actions/upload-release-asset@e8f9f06c4b078e705bd2ea027f0926603fc9b4d5 # v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -258,7 +258,7 @@ jobs:
           asset_content_type: application/zip
 
       - name: Upload checksum
-        uses: actions/upload-release-asset@v1
+        uses: actions/upload-release-asset@e8f9f06c4b078e705bd2ea027f0926603fc9b4d5 # v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -268,14 +268,14 @@ jobs:
           asset_content_type: application/txt
 
       - name: Delete previous latests release
-        uses: cb80/delrel@latest
+        uses: cb80/delrel@d06f884e9f5bc82bddf8fdd0059d09083d8b3215 # latest
         with:
           tag: ${{ inputs.name }}-${{ steps.get-tarball-name.outputs.TRACK }}-latest
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update latest release on Github
         id: update-latest-release
-        uses: actions/create-release@v1
+        uses: actions/create-release@0cb9c9b65d5d1901c1f53e5e66eaf4afd303e70e # v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -284,7 +284,7 @@ jobs:
           tag_name: ${{ inputs.name }}-${{ steps.get-tarball-name.outputs.TRACK }}-latest
 
       - name: Upload tarball
-        uses: actions/upload-release-asset@v1
+        uses: actions/upload-release-asset@e8f9f06c4b078e705bd2ea027f0926603fc9b4d5 # v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -294,7 +294,7 @@ jobs:
           asset_content_type: application/zip
 
       - name: Upload checksum
-        uses: actions/upload-release-asset@v1
+        uses: actions/upload-release-asset@e8f9f06c4b078e705bd2ea027f0926603fc9b4d5 # v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
