@@ -33,7 +33,7 @@ jobs:
         branch: ${{fromJson(needs.prepare_matrix.outputs.matrix)}}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Install dependencies
         run: |
@@ -42,7 +42,7 @@ jobs:
           sudo apt-get -y install openjdk-17-jdk
           sudo apt-get -y install maven
       - name: ssh agent
-        uses: webfactory/ssh-agent@v0.9.0
+        uses: webfactory/ssh-agent@e83874834305fe9a4a2997156cb26c5de65a8555 # v0.10.0
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
       - name: Clone repo
@@ -114,7 +114,7 @@ jobs:
           echo "End of the tests"
 
       - name: Upload locally built artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         continue-on-error: true
         with:
           name: integration-test-logs-${{steps.uuid.outputs.uuid }}
@@ -127,9 +127,9 @@ jobs:
       test_kyuubi
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Checkout results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           path: results/
           pattern: integration-test-logs-*
@@ -148,7 +148,7 @@ jobs:
           zip -r all-results.zip results
           echo "END"
       - name: Upload all tests logs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: integration-test-logs-uuid
           path: all-results.zip
