@@ -13,7 +13,7 @@ jobs:
 
   prepare_matrix:
     name: Prepare matrix
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - id: setup_matrix
         run: |
@@ -25,7 +25,7 @@ jobs:
 
   test_spark:
     needs: prepare_matrix
-    runs-on: [self-hosted, linux, X64, large, jammy]
+    runs-on: [self-hosted, linux, X64, large, noble]
     timeout-minutes: 1440
     strategy:
       fail-fast: false
@@ -103,7 +103,7 @@ jobs:
           path: charmed-spark/ie-tests/logs-${{steps.uuid.outputs.uuid }}.zip
       
   validation:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     needs:
       test_spark
