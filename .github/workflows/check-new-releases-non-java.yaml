@@ -112,14 +112,25 @@ jobs:
       - name: Check if products needed to be released
         id: check-release
         run: |
-          python3 -m uploader.services \
-            check-releases \
-            --output-directory ${{ env.OUTPUT_DIR }} \
-            --tarball-pattern ${{ inputs.tarball-regex }} \
-            --repository-owner canonical \
-            --project-name ${{ github.event.repository.name }} \
-            --series ${{ inputs.series }} \
-            --architecture ${{ inputs.architecture }}
+          # if series not specified, set it to empty string
+          if [ -z "${{ inputs.series }}" ]; then
+            python3 -m uploader.services \
+              check-releases \
+              --output-directory ${{ env.OUTPUT_DIR }} \
+              --tarball-pattern ${{ inputs.tarball-regex }} \
+              --repository-owner canonical \
+              --project-name ${{ github.event.repository.name }} \
+              --architecture ${{ inputs.architecture }}
+          else
+            python3 -m uploader.services \
+              check-releases \
+              --output-directory ${{ env.OUTPUT_DIR }} \
+              --tarball-pattern ${{ inputs.tarball-regex }} \
+              --repository-owner canonical \
+              --project-name ${{ github.event.repository.name }} \
+              --series ${{ inputs.series }} \
+              --architecture ${{ inputs.architecture }}
+          fi
           
           cd ${{ env.OUTPUT_DIR }};
           number_of_releases=$( ls . | wc -l )
@@ -192,8 +203,12 @@ jobs:
           echo "TARBALL_FILENAME=$tarball_filename" >> $GITHUB_OUTPUT
           cd ../../
           ls
-          version=$( python3 -m uploader.services get-version-multiarch -n $tarball_filename --series ${{ inputs.series }} --architecture ${{ inputs.architecture }})
-          lp_version=$(echo $version | cut -d'-' -f2-)
+          if [ -z "${{ inputs.series }}" ]; then
+            version=$( python3 -m uploader.services get-version-multiarch -n $tarball_filename --architecture ${{ inputs.architecture }})
+          else
+            version=$( python3 -m uploader.services get-version-multiarch -n $tarball_filename --series ${{ inputs.series }} --architecture ${{ inputs.architecture }})
+          fi
+          lp_version=$(echo $version | grep -oP '(?<=-)\d[\d.]*.*')
           track="${{ inputs.lp-release-track-name }}"
 
           echo "VERSION=$version" >> $GITHUB_OUTPUT
