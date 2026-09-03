@@ -34,7 +34,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Install dependencies
         run: |
@@ -49,7 +49,7 @@ jobs:
           sudo apt-get -y install g++-9 gcc-9
           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 60 --slave /usr/bin/g++ g++ /usr/bin/g++-9
       - name: ssh agent
-        uses: webfactory/ssh-agent@v0.9.0
+        uses: webfactory/ssh-agent@e83874834305fe9a4a2997156cb26c5de65a8555 # v0.10.0
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
       - name: Clone repo
@@ -90,7 +90,7 @@ jobs:
           zip -r logs-${{steps.uuid.outputs.uuid }}.zip logs
 
       - name: Upload locally built artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: integration-test-logs-${{steps.uuid.outputs.uuid }}
           path: hadoop/ie-tests/logs-${{steps.uuid.outputs.uuid }}.zip
@@ -101,9 +101,9 @@ jobs:
       test_hadoop
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Checkout results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           path: results/
           pattern: integration-test-logs-*
@@ -122,7 +122,7 @@ jobs:
           zip -r all-results.zip results
           echo "END"
       - name: Upload all tests logs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: integration-test-logs-uuid
           path: all-results.zip

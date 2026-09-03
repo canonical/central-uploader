@@ -35,7 +35,7 @@ jobs:
         branch: ${{fromJson(needs.prepare_matrix.outputs.matrix)}}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Install dependencies
         run: |
@@ -43,13 +43,13 @@ jobs:
           sudo apt update
           sudo apt install -y apt-transport-https bsdmainutils build-essential curl gosu jq less libapr1 locales make maven psmisc python3-dev software-properties-common unzip uuid-runtime wget zip
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6
         with:
           distribution: "temurin"
           java-version: "17"
 
       - name: ssh agent
-        uses: webfactory/ssh-agent@v0.9.0
+        uses: webfactory/ssh-agent@e83874834305fe9a4a2997156cb26c5de65a8555 # v0.10.0
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
@@ -157,7 +157,7 @@ jobs:
           zip -r logs-${{ matrix.branch }}-${{ steps.uuid.outputs.uuid }}.zip logs
 
       - name: Upload locally built artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         continue-on-error: true
         with:
           name: integration-test-logs-${{ matrix.branch }}-${{ steps.uuid.outputs.uuid }}
@@ -170,9 +170,9 @@ jobs:
       test_flink
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Checkout results
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           path: results/
           pattern: integration-test-logs-*
@@ -189,7 +189,7 @@ jobs:
           zip -r all-results.zip results
           echo "END"
       - name: Upload all tests logs
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: integration-test-logs-uuid
           path: all-results.zip

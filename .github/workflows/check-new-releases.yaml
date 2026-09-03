@@ -58,7 +58,7 @@ on:
       library-regex:
         required: true
         type: string
-        description: The regular expression to extract name of the tarball. 
+        description: The regular expression to extract name of the tarball.
       check-all-runs:
         required: false
         type: boolean
@@ -68,7 +68,7 @@ on:
         required: false
         default: ""
         type: string
-        description: Architecture of that file 
+        description: Architecture of that file
 
 permissions:
   contents: read
@@ -84,7 +84,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Print passed vars
         run: |
@@ -130,13 +130,15 @@ jobs:
 
       - name: Check if products needed to be released
         id: check-release
+        env:
+          ARCH: ${{ inputs.architecture }}
         run: |
           python3 -m uploader.services \
             check-releases \
             --output-directory ${{ env.OUTPUT_DIR }} \
             --tarball-pattern ${{ inputs.tarball-regex }} \
             --repository-owner canonical --project-name ${{ github.event.repository.name }} \
-            --architecture ${{ inputs.architecture }}
+            ${ARCH:+"--architecture $ARCH"}
 
           cd ${{ env.OUTPUT_DIR }};
           number_of_releases=$( ls . | wc -l )
@@ -155,7 +157,7 @@ jobs:
 
       - name: Store builds
         if: ${{ steps.check-release.outputs.release-package == 'true' }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: releases-${{ inputs.name }}-${{ inputs.lp-building-branch-prefix }}-${{ inputs.architecture }}
           path: ${{ env.OUTPUT_DIR }}-${{ inputs.name }}.zip
@@ -183,10 +185,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Download releases
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: releases-${{ inputs.name }}-${{ inputs.lp-building-branch-prefix }}-${{ inputs.architecture }}
 
@@ -271,7 +273,7 @@ jobs:
             --credentials ${{ env.LP_CREDENTIALS }}
 
       - name: Release the package on Github
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         with:
           name: Release ${{ steps.get-tarball-name.outputs.VERSION }}
           tag_name: ${{ steps.get-tarball-name.outputs.VERSION }}
@@ -286,7 +288,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update latest release on Github
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         with:
           name: Release ${{ inputs.name }}-${{ steps.get-tarball-name.outputs.TRACK }}-latest
           tag_name: ${{ inputs.name }}-${{ steps.get-tarball-name.outputs.TRACK }}-latest
