@@ -138,7 +138,7 @@ jobs:
             --output-directory ${{ env.OUTPUT_DIR }} \
             --tarball-pattern ${{ inputs.tarball-regex }} \
             --repository-owner canonical --project-name ${{ github.event.repository.name }} \
-            ${ARCH:+"--architecture $ARCH"}
+            ${ARCH:+--architecture "$ARCH"}
 
           cd ${{ env.OUTPUT_DIR }};
           number_of_releases=$( ls . | wc -l )
