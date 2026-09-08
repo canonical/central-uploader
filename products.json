@@ -95,7 +95,7 @@
     "artifactory-url": "https://canonical.jfrog.io/artifactory/dataplatform-maven-local/",
     "artifactory-user": "ARTIFACTORY_USER",
     "artifactory-token": "ARTIFACTORY_TOKEN",
-    "tarball-regex": "apache-kafka-*.tar.gz"
+    "tarball-regex": "apache-kafka_*.tar.gz"
   },
   {
     "name": "kyuubi",
