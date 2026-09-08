@@ -84,6 +84,20 @@
     "tarball-regex": "kafka*.tgz"
   },
   {
+    "name": "apache-kafka",
+    "lp-building-project": "soss",
+    "lp-releasing-project": "apache-kafka-releases",
+    "lp-building-repo": "~data-platform/soss/+source/kafka/+git/kafka/",
+    "lp-building-branch-prefix": "lp-4",
+    "lp-consumer-key": "LP_CONSUMER_KEY",
+    "lp-access-token": "LP_ACCESS_TOKEN",
+    "lp-access-secret": "LP_SECRET_TOKEN",
+    "artifactory-url": "https://canonical.jfrog.io/artifactory/dataplatform-maven-local/",
+    "artifactory-user": "ARTIFACTORY_USER",
+    "artifactory-token": "ARTIFACTORY_TOKEN",
+    "tarball-regex": "apache-kafka-*.tar.gz"
+  },
+  {
     "name": "kyuubi",
     "lp-building-project": "soss",
     "lp-releasing-project": "kyuubi-releases",
