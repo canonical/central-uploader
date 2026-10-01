@@ -43,11 +43,11 @@ class CIBuild:
 def _get_tokenized_librarian_url(lp: Launchpad, file_url: str) -> str:
     """Use OAuth to get a tokenised URL for private downloads."""
     # rewrote url
-    rewritten_url = file_url.replace("code.launchpad.net/", "api.launchpad.net/devel/")
-    logger.debug("Rewrote {} to {} for OAuth access...".format(file_url, rewritten_url))
-    logger.debug("Using OAuth'd client to get launchpad.net URL with token...")
+    # rewritten_url = file_url.replace("code.launchpad.net/", "api.launchpad.net/devel/")
+    # logger.debug("Rewrote {} to {} for OAuth access...".format(file_url, rewritten_url))
+    # logger.debug("Using OAuth'd client to get launchpad.net URL with token...")
     try:
-        ret = lp._browser._connection.request(rewritten_url, redirections=0)
+        ret = lp._browser._connection.request(file_url)
         # Print the response to assist debugging failures
         logger.debug(ret)
         raise AssertionError("No redirect to download from, we can't proceed")
