@@ -9,14 +9,12 @@ import fnmatch
 import logging
 import os
 import sys
-import urllib.request
 from argparse import Namespace
 from dataclasses import dataclass
 from typing import Any
-from urllib.error import URLError
 from urllib.parse import unquote
 
-import httplib2
+import httpx2
 from launchpadlib.launchpad import Launchpad
 
 LP_APP = "data-platform-java-build-app"
@@ -40,19 +38,60 @@ class CIBuild:
     artifact_urls: list[str]
 
 
-def _get_tokenized_librarian_url(lp: Launchpad, file_url: str) -> str:
-    """Use OAuth to get a tokenised URL for private downloads."""
-    # rewrote url
-    # rewritten_url = file_url.replace("code.launchpad.net/", "api.launchpad.net/devel/")
-    # logger.debug("Rewrote {} to {} for OAuth access...".format(file_url, rewritten_url))
-    # logger.debug("Using OAuth'd client to get launchpad.net URL with token...")
-    try:
-        ret = lp._browser._connection.request(file_url)
-        # Print the response to assist debugging failures
-        logger.debug(ret)
-        raise AssertionError("No redirect to download from, we can't proceed")
-    except httplib2.RedirectLimit as e:
-        return str(e.response["location"])  # type: ignore
+def _rewrite_artifact_url_for_api(file_url: str) -> str:
+    """Rewrite a Launchpad web artifact URL to its API equivalent."""
+    return file_url.replace("code.launchpad.net/", "api.launchpad.net/devel/")
+
+
+def _get_oauth_headers(lp: Launchpad, url: str) -> dict[str, str]:
+    """Sign a request using Launchpad OAuth credentials."""
+    headers: dict[str, str] = {}
+    lp._browser._connection.authorizer.authorizeRequest(url, "GET", None, headers)
+    return headers
+
+
+def _download_artifact(lp: Launchpad, file_url: str, destination: str) -> None:
+    """Download a Launchpad build artifact via the OAuth-capable API URL."""
+    api_url = _rewrite_artifact_url_for_api(file_url)
+    headers = _get_oauth_headers(lp, api_url)
+    timeout = httpx2.Timeout(connect=30.0, read=600.0, write=60.0, pool=30.0)
+
+    logger.debug("Downloading artifact via rewritten API URL: %s", api_url)
+    with httpx2.Client(follow_redirects=True, timeout=timeout) as client:
+        with client.stream("GET", api_url, headers=headers) as response:
+            response.raise_for_status()
+            final_url = str(response.url)
+            if "/+login" in final_url or final_url.endswith("+login"):
+                raise RuntimeError(
+                    f"Artifact request was redirected to Launchpad login: {final_url}"
+                )
+            with open(destination, "wb") as downloaded_file:
+                for chunk in response.iter_bytes(chunk_size=1024 * 1024):
+                    if chunk:
+                        downloaded_file.write(chunk)
+
+
+def _selected_artifact_urls(
+    artifact_urls: list[str], artifact_pattern: str, download_repository_zip: bool
+) -> list[str]:
+    """Filter artifacts to the minimum set used by downstream workflows."""
+    file_urls_by_name = {
+        unquote(str(url_file).split("/")[-1]): url_file for url_file in artifact_urls
+    }
+    selected_names = {
+        file_name
+        for file_name in file_urls_by_name
+        if fnmatch.fnmatch(file_name, artifact_pattern)
+    }
+    selected_names.update({f"{file_name}.sha512" for file_name in selected_names})
+    if download_repository_zip and "repository.zip" in file_urls_by_name:
+        selected_names.add("repository.zip")
+
+    return [
+        file_urls_by_name[file_name]
+        for file_name in file_urls_by_name
+        if file_name in selected_names
+    ]
 
 
 def parse_args() -> Namespace:
@@ -91,6 +130,12 @@ def parse_args() -> Namespace:
         help="Check all runs until one tarball that matches the regex is found.",
         required=False,
         default=False,
+    )
+    parser.add_argument(
+        "--download-repository-zip",
+        action="store_true",
+        help="Also download repository.zip for workflows that upload Java dependencies.",
+        required=False,
     )
     return parser.parse_args()
 
@@ -167,21 +212,35 @@ def get_build_runs_by_branch(
 
 
 def download_build_artifacts_by_branch(
-    launchpad: Launchpad, branch: str, build_run, output_folder: str
+    launchpad: Launchpad,
+    branch: str,
+    build_run,
+    output_folder: str,
+    artifact_pattern: str,
+    download_repository_zip: bool,
 ) -> None:
-    """Download build artifacts of a build run."""
+    """Download the build artifacts needed by downstream workflows."""
     output_directory = f"{output_folder}/{str(branch).split('/')[-1]}"
     os.makedirs(output_directory, exist_ok=True)
 
-    for url_file in build_run.artifact_urls:
-        url = _get_tokenized_librarian_url(launchpad, url_file)
-        # download each file related to the build
+    selected_artifact_urls = _selected_artifact_urls(
+        build_run.artifact_urls, artifact_pattern, download_repository_zip
+    )
+    logger.info(
+        "Selected %d/%d artifacts for branch %s",
+        len(selected_artifact_urls),
+        len(build_run.artifact_urls),
+        branch,
+    )
+
+    for url_file in selected_artifact_urls:
         file_name = unquote(str(url_file).split("/")[-1])
+        destination = f"{output_directory}/{file_name}"
         try:
-            urllib.request.urlretrieve(url, f"{output_directory}/{file_name}")
-        except URLError as e:
+            _download_artifact(launchpad, url_file, destination)
+        except httpx2.HTTPError as e:
             raise RuntimeError(
-                "Failed to download '{}'. '{}'".format(url, e.reason)
+                "Failed to download '{}'. '{}'".format(url_file, e)
             ) from e
 
 
@@ -231,7 +290,12 @@ def main():
         if artifact_exist:
             logger.info(f"Downloading artifacts from branch: {branch}")
             download_build_artifacts_by_branch(
-                launchpad, branch, last_run, args.output_folder
+                launchpad,
+                branch,
+                last_run,
+                args.output_folder,
+                args.tarball_pattern,
+                args.download_repository_zip,
             )
         else:
             logger.warning(f"Branch {branch} does not contains are artifact!")
