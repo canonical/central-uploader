@@ -126,7 +126,8 @@ jobs:
             --credential-file ${{ env.LP_CREDENTIALS }} \
             --output-folder ${{ env.OUTPUT_DIR }} \
             --tarball-pattern ${{ inputs.tarball-regex }} \
-            --check-all-runs ${{ inputs.check-all-runs }}
+            --check-all-runs ${{ inputs.check-all-runs }} \
+            --library-pattern "${{ inputs.library-regex }}"
 
       - name: Check if products needed to be released
         id: check-release
