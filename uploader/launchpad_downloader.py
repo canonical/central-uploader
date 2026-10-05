@@ -83,6 +83,8 @@ def _selected_artifact_urls(
         for file_name in file_urls_by_name
         if fnmatch.fnmatch(file_name, artifact_pattern)
     }
+    # Note: we assume a sha512 checksum, as it was the case for all the products I checked
+    # Feel free to update if needed.
     selected_names.update({f"{file_name}.sha512" for file_name in selected_names})
     if download_repository_zip and "repository.zip" in file_urls_by_name:
         selected_names.add("repository.zip")
