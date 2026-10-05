@@ -38,22 +38,17 @@ class CIBuild:
     artifact_urls: list[str]
 
 
-def _rewrite_artifact_url_for_api(file_url: str) -> str:
-    """Rewrite a Launchpad web artifact URL to its API equivalent."""
-    return file_url.replace("code.launchpad.net/", "api.launchpad.net/devel/")
-
-
-def _get_oauth_headers(lp: Launchpad, url: str) -> dict[str, str]:
+def get_oauth_headers(lp: Launchpad, url: str) -> dict[str, str]:
     """Sign a request using Launchpad OAuth credentials."""
     headers: dict[str, str] = {}
     lp._browser._connection.authorizer.authorizeRequest(url, "GET", None, headers)
     return headers
 
 
-def _download_artifact(lp: Launchpad, file_url: str, destination: str) -> None:
+def download_artifact(lp: Launchpad, file_url: str, destination: str) -> None:
     """Download a Launchpad build artifact via the OAuth-capable API URL."""
-    api_url = _rewrite_artifact_url_for_api(file_url)
-    headers = _get_oauth_headers(lp, api_url)
+    api_url = file_url.replace("code.launchpad.net/", "api.launchpad.net/devel/")
+    headers = get_oauth_headers(lp, api_url)
     timeout = httpx2.Timeout(connect=30.0, read=600.0, write=60.0, pool=30.0)
 
     logger.debug("Downloading artifact via rewritten API URL: %s", api_url)
@@ -71,8 +66,8 @@ def _download_artifact(lp: Launchpad, file_url: str, destination: str) -> None:
                         downloaded_file.write(chunk)
 
 
-def _selected_artifact_urls(
-    artifact_urls: list[str], artifact_pattern: str, download_repository_zip: bool
+def filter_selected_artifact_urls(
+    artifact_urls: list[str], artifact_pattern: str, library_pattern: str = ""
 ) -> list[str]:
     """Filter artifacts to the minimum set used by downstream workflows."""
     file_urls_by_name = {
@@ -86,7 +81,7 @@ def _selected_artifact_urls(
     # Note: we assume a sha512 checksum, as it was the case for all the products I checked
     # Feel free to update if needed.
     selected_names.update({f"{file_name}.sha512" for file_name in selected_names})
-    if download_repository_zip and "repository.zip" in file_urls_by_name:
+    if library_pattern and "repository.zip" in file_urls_by_name:
         selected_names.add("repository.zip")
 
     return [
@@ -134,10 +129,11 @@ def parse_args() -> Namespace:
         default=False,
     )
     parser.add_argument(
-        "--download-repository-zip",
-        action="store_true",
-        help="Also download repository.zip for workflows that upload Java dependencies.",
+        "--library-pattern",
+        type=str,
+        help="Library pattern name. If specified, repository.zip is also downloaded.",
         required=False,
+        default="",
     )
     return parser.parse_args()
 
@@ -219,27 +215,21 @@ def download_build_artifacts_by_branch(
     build_run,
     output_folder: str,
     artifact_pattern: str,
-    download_repository_zip: bool,
+    library_pattern: str = "",
 ) -> None:
     """Download the build artifacts needed by downstream workflows."""
     output_directory = f"{output_folder}/{str(branch).split('/')[-1]}"
     os.makedirs(output_directory, exist_ok=True)
 
-    selected_artifact_urls = _selected_artifact_urls(
-        build_run.artifact_urls, artifact_pattern, download_repository_zip
-    )
-    logger.info(
-        "Selected %d/%d artifacts for branch %s",
-        len(selected_artifact_urls),
-        len(build_run.artifact_urls),
-        branch,
+    selected_artifact_urls = filter_selected_artifact_urls(
+        build_run.artifact_urls, artifact_pattern, library_pattern
     )
 
     for url_file in selected_artifact_urls:
         file_name = unquote(str(url_file).split("/")[-1])
         destination = f"{output_directory}/{file_name}"
         try:
-            _download_artifact(launchpad, url_file, destination)
+            download_artifact(launchpad, url_file, destination)
         except httpx2.HTTPError as e:
             raise RuntimeError(
                 "Failed to download '{}'. '{}'".format(url_file, e)
@@ -297,7 +287,7 @@ def main():
                 last_run,
                 args.output_folder,
                 args.tarball_pattern,
-                args.download_repository_zip,
+                args.library_pattern,
             )
         else:
             logger.warning(f"Branch {branch} does not contains are artifact!")
