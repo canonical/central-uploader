@@ -81,7 +81,7 @@ jobs:
   download-builds:
     name: Download build products from Launchpad
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 120
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -126,7 +126,8 @@ jobs:
             --credential-file ${{ env.LP_CREDENTIALS }} \
             --output-folder ${{ env.OUTPUT_DIR }} \
             --tarball-pattern ${{ inputs.tarball-regex }} \
-            --check-all-runs ${{ inputs.check-all-runs }}
+            --check-all-runs ${{ inputs.check-all-runs }} \
+            --library-pattern "${{ inputs.library-regex }}"
 
       - name: Check if products needed to be released
         id: check-release
