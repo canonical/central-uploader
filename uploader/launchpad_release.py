@@ -117,7 +117,7 @@ def get_tarball_files(
     file_size = tarball_path.stat().st_size
     logger.debug(f"File size: {file_size}")
     files = []
-    if file_size > 500_000_000:
+    if file_size > 300_000_000:
         logger.debug("Split on multiple files...")
         command = f"split -b 200m {tarball_path} {tarball_path.name}."
         os.system(command)
@@ -134,7 +134,7 @@ def main():
     """Download and store latest release artifacts for the release branches of a product."""
     args = parse_args()
 
-    logger.debug("Split archive if size is greater than 500MB")
+    logger.debug("Split archive if size is greater than 300MB")
     # split files if needed
     # this operation need to be done at the beginning otherwise there will be a timeout from lauchpadlib
     # many times instead of timeout we get a SSL error.
