@@ -4,10 +4,12 @@
 
 import subprocess
 from unittest.mock import patch
+import pytest
 
 from uploader.utils import (
     check_next_release_name,
     get_patch_version,
+    get_product_tags,
     get_repositories_tags,
     get_version_from_tarball_name,
     is_valid_product_name,
@@ -197,3 +199,24 @@ def test_lp_version_name():
         except subprocess.CalledProcessError as e:
             print(f"extracting lp_version failed on input: {tag} — {e.stderr}")
             continue
+
+
+@pytest.mark.parametrize(
+    "name, version, series, architecture, tag",
+    [
+        ("opensearch", "3.8.0", None, "amd64", "opensearch-3.8.0-amd64-ubuntu0"),
+        ("mongosh", "2.9.2", "noble", "amd64", "mongosh-2.9.2-noble-amd64-ubuntu0"),
+        ("spark", "3.4.1", None, None, "spark-3.4.1-ubuntu0"),
+    ],
+)
+def test_get_product_tags(name, version, series, architecture, tag):
+    """Test that get_product_tags find correct tags."""
+    tags = [
+        tag,
+        f"{name}-{version}0-ubuntu0",
+        "opensearch-3.8.0-arm64-ubuntu0",
+    ]
+    with patch("uploader.utils.get_repositories_tags", return_value=tags):
+        assert get_product_tags(
+            "owner", "project", name, version, series, architecture
+        ) == [tag]

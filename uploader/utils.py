@@ -68,13 +68,15 @@ def get_product_tags(
     prefix = f"{product_name}-{product_version}"
 
     if series:
-        prefix = f"{product_name}-{product_version}-.*-{series}"
+        prefix = f"{product_name}-{product_version}-{series}"
 
     if architecture:
-        prefix = f"{prefix}-.*-{architecture}"
+        prefix = f"{prefix}-{architecture}"
 
     tags = get_repositories_tags(repository_owner, project_name)
-    return [t for t in tags if re.match(prefix, t) and is_valid_release_version(t)]
+    return [
+        t for t in tags if t.startswith(f"{prefix}-") and is_valid_release_version(t)
+    ]
 
 
 def get_library_tags(repository_owner: str, project_name: str, library_name: str):
