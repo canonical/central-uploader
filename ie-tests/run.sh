@@ -1,17 +1,18 @@
 #!/bin/bash
 
-function run_tests(){
+function run_tests() {
     echo "START TEST"
-    TEST_COMMAND=$1
+    LABEL=$1
+    TEST_COMMAND=$2
     IE_FOLDER=$(pwd)
 
     FOLDER="${IE_FOLDER}/.."
 
     DATE=$(date +%Y%m%dH%HM%M)
-    BRANCH=$(git rev-parse --abbrev-ref HEAD)
     COMMIT=$(git rev-parse --short HEAD)
+    SAFE_LABEL=${LABEL//[^a-zA-Z0-9._-]/_}
 
-    LOG_NAME=${DATE}_${BRANCH}_${RANDOM}_test
+    LOG_NAME=${DATE}_${SAFE_LABEL}_${RANDOM}_test
 
     mkdir -p "${IE_FOLDER}/logs"
 
@@ -19,37 +20,31 @@ function run_tests(){
     STD_ERR="${IE_FOLDER}/logs/${LOG_NAME}.err"
 
     # populate the error file
-    echo "" >> $STD_ERR
+    echo "" >>$STD_ERR
 
-    echo "***************************************" > $STD_OUT
-    echo "     INTEGRATION TESTS" >> $STD_OUT
-    echo "***************************************" >> $STD_OUT
-    echo "" >> $STD_OUT
-    echo "Date: ${DATE}" >> $STD_OUT
-    echo "Branch: ${BRANCH}" >> $STD_OUT
-    echo "Commit: ${COMMIT}" >> $STD_OUT
-    echo "LogName: ${LOG_NAME}" >> $STD_OUT
-    echo "" >> $STD_OUT
-    echo "***************************************" >> $STD_OUT
-    echo "" >> $STD_OUT
+    echo "***************************************" >$STD_OUT
+    echo "     INTEGRATION TESTS" >>$STD_OUT
+    echo "***************************************" >>$STD_OUT
+    echo "" >>$STD_OUT
+    echo "Date: ${DATE}" >>$STD_OUT
+    echo "Label: ${LABEL}" >>$STD_OUT
+    echo "Commit: ${COMMIT}" >>$STD_OUT
+    echo "LogName: ${LOG_NAME}" >>$STD_OUT
+    echo "" >>$STD_OUT
+    echo "***************************************" >>$STD_OUT
+    echo "" >>$STD_OUT
 
     FORMAT_TIME="\n***************************************\nTIMINGS:\n%E real\n%U user\n%S sys"
 
     echo "Before running the test!"
-    ./tests.sh "${FOLDER}" "${TEST_COMMAND}" >> $STD_OUT 2> $STD_ERR
+    ./tests.sh "${FOLDER}" "${TEST_COMMAND}" >>$STD_OUT 2>$STD_ERR
 
-    echo "***************************************" >> $STD_OUT
+    echo "***************************************" >>$STD_OUT
 }
 
-BRANCH=$1
+LABEL=$1
 TEST_COMMAND=$2
 
-if [ -z "$BRANCH" ];
-then 
-    BRANCH="release-3.3.6-ubuntu2"
-fi
-
-echo "Branch: ${BRANCH}"
+echo "Label: ${LABEL}"
 echo "Command: ${TEST_COMMAND}"
-git checkout $BRANCH
-run_tests "${TEST_COMMAND}"
+run_tests "${LABEL}" "${TEST_COMMAND}"
