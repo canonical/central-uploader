@@ -3,15 +3,6 @@ name: Run Spark integration tests
 on:
   workflow_dispatch:
     inputs:
-      runner:
-        description: "Runner OS label"
-        required: true
-        type: choice
-        options:
-          - jammy
-          - noble
-          - resolute
-        default: noble
       branches:
         description: "Comma-separated list of branches to test"
         required: true
@@ -32,7 +23,7 @@ jobs:
 
   test_spark:
     needs: prepare_matrix
-    runs-on: [self-hosted, linux, X64, large, "${{ inputs.runner }}"]
+    runs-on: [self-hosted, linux, X64, large, noble]
     timeout-minutes: 1440
     strategy:
       fail-fast: false
@@ -60,8 +51,18 @@ jobs:
           echo "cloned!"
           echo "Checking out test branch: $BRANCH"
           git -C charmed-spark checkout "$BRANCH"
-          cp -r ie-tests charmed-spark
+
           echo "Branch to test: $BRANCH"
+
+      - name: Set up Go
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version: stable
+
+      - name: Install Spread
+        run: |
+          go install github.com/canonical/spread/cmd/spread@master
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
       - name: Generate uuid
         id: uuid
@@ -70,21 +71,39 @@ jobs:
           uuid=$(uuidgen)
           echo "uuid=$uuid" >> $GITHUB_OUTPUT
 
-      - name: Run product-specific integration test
-        uses: ./charmed-spark/lp/ci
-        with:
-          label: ${{ matrix.branch || 'lp-4.2.1' }}
-          uuid: ${{ steps.uuid.outputs.uuid }}
-          username: ${{ secrets.ARTIFACTORY_USERNAME }}
-          password: ${{ secrets.ARTIFACTORY_PASSWORD }}
-          artifactory_url: ${{ secrets.SPARK_ARTIFACTORY_URL }}
+      - name: Run Spark Spread task
+        working-directory: charmed-spark
+        env:
+          ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+          SPARK_ARTIFACTORY_URL: ${{ secrets.SPARK_ARTIFACTORY_URL }}
+        run: |
+          set -euo pipefail
+          spread -artifacts="$GITHUB_WORKSPACE/spread-artifacts" \
+            lp/ci/tests
         timeout-minutes: 900
 
+      - name: Stage logs for validation
+        if: always()
+        env:
+          RUN_UUID: ${{ steps.uuid.outputs.uuid }}
+        run: |
+          set -euo pipefail
+          mkdir -p results
+          archive=$(find spread-artifacts -type f -name logs.zip -print -quit 2>/dev/null || true)
+          if [[ -n "$archive" ]]; then
+            cp "$archive" "results/logs-${RUN_UUID}.zip"
+          else
+            echo "No Spread log archive found"
+          fi
+
       - name: Upload locally built artifact
+        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: integration-test-logs-${{steps.uuid.outputs.uuid }}
-          path: charmed-spark/ie-tests/logs-${{steps.uuid.outputs.uuid }}.zip
+          path: results/*.zip
+          if-no-files-found: warn
 
   validation:
     runs-on: ubuntu-24.04
