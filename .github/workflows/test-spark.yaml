@@ -54,6 +54,11 @@ jobs:
 
           echo "Branch to test: $BRANCH"
 
+      - name: Set up LXD
+        uses: canonical/setup-lxd@148b75cb43f4ac1356752fad771cc418cb215033 # main
+        with:
+          channel: 6/stable
+
       - name: Set up Go
         uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
         with:
@@ -78,8 +83,7 @@ jobs:
           ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
           SPARK_ARTIFACTORY_URL: ${{ secrets.SPARK_ARTIFACTORY_URL }}
         run: |
-          set -euo pipefail
-          spread -artifacts="$GITHUB_WORKSPACE/spread-artifacts" \
+          spread -vv -artifacts="$GITHUB_WORKSPACE/spread-artifacts" \
             lp/ci/tests
         timeout-minutes: 900
 
